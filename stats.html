@@ -155,6 +155,16 @@ h1 .accent { color: #b83030; font-style: italic; }
 .finding-tag.warn { background: var(--ok-bg); color: var(--ok); border-color: var(--ok-b); }
 .findings-empty { font-size: 13px; color: var(--good); padding: 12px 0; }
 
+/* ── MOBILE ── */
+@media (max-width: 700px) {
+  .page { padding: 20px 14px 48px; }
+  .data-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; }
+  .data-table td, .data-table th { white-space: normal; min-width: 80px; }
+  .data-table .td-name { min-width: 130px; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .report-title { font-size: 22px; }
+}
+
 /* ── PRINT ── */
 @media print {
   header .header-right { display: none; }

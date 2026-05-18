@@ -371,8 +371,8 @@ h1 .accent { color: var(--poor); font-style: italic; }
   <div class="header-right">
     <span class="header-stat"><strong id="h-total">—</strong> игралишта · мај 2025</span>
     <span class="method-badge">EN 1176 · CPSC</span>
-    <a class="stats-link" href="stats.html"><span class="sl-full">📊 Статистики</span><span class="sl-icon">📊</span></a>
     <a class="add-btn" href="submit.html">+ Додај игралиште</a>
+    <a class="stats-link" href="stats.html"><span class="sl-full">📊 Статистики</span><span class="sl-icon">📊</span></a>
   </div>
 </header>
 
@@ -517,10 +517,11 @@ function fmtDate(d) {
 
 // ── MAP ─────────────────────────────────────────────────────────────────────
 const KARPOS_CENTER = [42.001, 21.398];
+const isMobile = window.innerWidth <= 760;
 const map = L.map('map', {
   center: KARPOS_CENTER, zoom: 14, minZoom: 13, maxZoom: 18,
   maxBounds: [[41.972, 21.368], [42.032, 21.452]], maxBoundsViscosity: 1.0,
-  dragging: false, scrollWheelZoom: false, touchZoom: false,
+  dragging: isMobile, scrollWheelZoom: false, touchZoom: isMobile,
   doubleClickZoom: false, boxZoom: false, keyboard: false,
 });
 
