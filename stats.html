@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="mk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Статистики — Игралишта Карпош</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f2ed;
+  --ink: #1a1a1a;
+  --ink-soft: #6b6560;
+  --line: #e5dfd5;
+  --paper: #ffffff;
+  --good: #2a7a50; --good-bg: #eaf4f0; --good-b: #b8dece;
+  --ok: #9a6f00;   --ok-bg: #fdf5e0;   --ok-b: #e8d080;
+  --poor: #b83030; --poor-bg: #fdf0f0; --poor-b: #e8b0b0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: var(--bg); }
+body { color: var(--ink); font-family: 'Geist', -apple-system, sans-serif;
+  font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; min-height: 100vh; }
+
+/* ── HEADER ── */
+header { border-bottom: 1px solid var(--line); padding: 12px 22px; background: var(--paper);
+  display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+  position: sticky; top: 0; z-index: 10; }
+h1 { font-family: 'Fraunces', serif; font-weight: 800; font-size: 22px;
+  letter-spacing: -0.02em; line-height: 1; }
+h1 .accent { color: #b83030; font-style: italic; }
+.header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.back-link { font-size: 12px; color: var(--ink-soft); text-decoration: none;
+  padding: 5px 11px; border: 1px solid var(--line); border-radius: 5px; transition: all .13s; }
+.back-link:hover { color: var(--ink); border-color: var(--ink-soft); }
+.print-btn { font-size: 12px; font-family: inherit; padding: 5px 12px; cursor: pointer;
+  background: var(--ink); color: var(--paper); border: none; border-radius: 5px; }
+.print-btn:hover { opacity: .85; }
+
+/* ── PAGE LAYOUT ── */
+.page { max-width: 860px; margin: 0 auto; padding: 36px 24px 60px; }
+.report-header { margin-bottom: 32px; }
+.report-title { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 800;
+  letter-spacing: -.02em; line-height: 1.15; margin-bottom: 6px; }
+.report-meta { font-size: 13px; color: var(--ink-soft); }
+
+/* ── SECTION ── */
+.section { margin-bottom: 40px; }
+.section-title { font-family: 'Fraunces', serif; font-size: 17px; font-weight: 700;
+  margin-bottom: 16px; display: flex; align-items: center; gap: 9px; }
+.section-title::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+.section-sub { font-size: 12px; color: var(--ink-soft); margin-top: -10px; margin-bottom: 16px; }
+
+/* ── KEY NUMBERS ── */
+.kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+@media (max-width: 600px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+.kpi { padding: 14px 16px; border-radius: 10px; border: 1px solid var(--line); background: var(--paper); }
+.kpi.good-kpi  { border-color: var(--good-b); background: var(--good-bg); }
+.kpi.ok-kpi    { border-color: var(--ok-b);   background: var(--ok-bg); }
+.kpi.poor-kpi  { border-color: var(--poor-b); background: var(--poor-bg); }
+.kpi.alert-kpi { border-color: #f0c090; background: #fff8f0; }
+.kpi-num { font-family: 'Fraunces', serif; font-size: 36px; font-weight: 800;
+  line-height: 1; margin-bottom: 4px; }
+.kpi.good-kpi .kpi-num  { color: var(--good); }
+.kpi.ok-kpi   .kpi-num  { color: var(--ok); }
+.kpi.poor-kpi .kpi-num  { color: var(--poor); }
+.kpi.alert-kpi .kpi-num { color: #c05000; }
+.kpi-label { font-size: 12px; color: var(--ink-soft); line-height: 1.4; }
+.kpi-label strong { color: var(--ink); }
+
+/* ── DISTRIBUTION BAR ── */
+.dist-wrap { margin-bottom: 20px; }
+.dist-bar { height: 24px; border-radius: 5px; overflow: hidden; display: flex; margin-bottom: 10px; }
+.dist-seg { height: 100%; transition: width .3s; }
+.dist-seg.good { background: var(--good); }
+.dist-seg.ok   { background: var(--ok); }
+.dist-seg.poor { background: var(--poor); }
+.dist-legend { display: flex; gap: 18px; font-size: 12px; }
+.dl-item { display: flex; align-items: center; gap: 6px; }
+.dl-dot { width: 10px; height: 10px; border-radius: 50%; }
+.dl-dot.good { background: var(--good); } .dl-dot.ok { background: var(--ok); } .dl-dot.poor { background: var(--poor); }
+
+/* ── ACCOUNTABILITY BOX ── */
+.accountability-box { border-radius: 10px; padding: 18px 20px; margin-bottom: 20px; }
+.accountability-box.bad  { background: var(--poor-bg); border: 1px solid var(--poor-b); }
+.accountability-box.good { background: var(--good-bg); border: 1px solid var(--good-b); }
+.acc-amount { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 800; line-height: 1; }
+.accountability-box.bad  .acc-amount { color: var(--poor); }
+.accountability-box.good .acc-amount { color: var(--good); }
+.acc-label { font-size: 13px; margin-top: 4px; line-height: 1.5; }
+
+/* ── TABLES ── */
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table th { text-align: left; font-size: 10px; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--ink-soft); padding: 6px 10px;
+  border-bottom: 2px solid var(--line); font-weight: 500; }
+.data-table td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: #faf8f4; }
+.data-table .td-name { font-weight: 500; }
+.data-table .td-neighborhood { color: var(--ink-soft); font-size: 11px; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; }
+.badge.good { background: var(--good-bg); color: var(--good); border: 1px solid var(--good-b); }
+.badge.ok   { background: var(--ok-bg);   color: var(--ok);   border: 1px solid var(--ok-b); }
+.badge.poor { background: var(--poor-bg); color: var(--poor); border: 1px solid var(--poor-b); }
+.badge.clean  { background: var(--good-bg); color: var(--good); border: 1px solid var(--good-b); }
+.badge.dirty  { background: var(--poor-bg); color: var(--poor); border: 1px solid var(--poor-b); }
+.badge.neutral { background: var(--bg); color: var(--ink-soft); border: 1px solid var(--line); }
+.tval-bad { color: var(--poor); font-weight: 600; }
+.tval-ok  { color: var(--good); font-weight: 600; }
+.issue-count { display: inline-block; background: #fff0e0; color: #c05000;
+  border: 1px solid #f0c090; padding: 1px 7px; border-radius: 3px; font-size: 11px; font-weight: 600; }
+
+/* ── NEIGHBORHOOD GRID ── */
+.nbhd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.nbhd-card { padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
+.nbhd-name { font-weight: 600; font-size: 13px; margin-bottom: 6px; }
+.nbhd-bar { height: 6px; border-radius: 3px; overflow: hidden; display: flex; margin-bottom: 6px; }
+.nbhd-bar .seg { height: 100%; }
+.nbhd-counts { font-size: 11px; color: var(--ink-soft); display: flex; gap: 8px; }
+.nc-g { color: var(--good); } .nc-o { color: var(--ok); } .nc-p { color: var(--poor); }
+
+/* ── PRIORITY LIST ── */
+.priority-list { list-style: none; }
+.prio-item { display: flex; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--line);
+  align-items: flex-start; }
+.prio-item:last-child { border-bottom: none; }
+.prio-rank { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 800;
+  color: var(--poor); line-height: 1; flex-shrink: 0; width: 28px; text-align: right; }
+.prio-body { flex: 1; }
+.prio-name { font-weight: 600; font-size: 14px; margin-bottom: 3px; }
+.prio-issues { font-size: 12px; color: var(--ink-soft); line-height: 1.5; }
+.prio-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
+
+/* ── FOOTER ── */
+.report-footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line);
+  font-size: 11px; color: var(--ink-soft); line-height: 1.7; }
+
+/* ── OPEN FINDINGS ── */
+.findings-list { list-style: none; }
+.finding-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line);
+  align-items: flex-start; }
+.finding-item:last-child { border-bottom: none; }
+.finding-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px;
+  background: var(--poor); }
+.finding-dot.warn { background: var(--ok); }
+.finding-body { flex: 1; min-width: 0; }
+.finding-text { font-size: 13px; line-height: 1.5; margin-bottom: 4px; }
+.finding-meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.finding-pg { font-size: 11px; font-weight: 600; color: var(--ink-soft); }
+.finding-date { font-size: 11px; color: var(--ink-soft); }
+.finding-tag { display: inline-block; font-size: 10px; padding: 1px 7px; border-radius: 3px;
+  background: var(--poor-bg); color: var(--poor); border: 1px solid var(--poor-b); }
+.finding-tag.warn { background: var(--ok-bg); color: var(--ok); border-color: var(--ok-b); }
+.findings-empty { font-size: 13px; color: var(--good); padding: 12px 0; }
+
+/* ── PRINT ── */
+@media print {
+  header .header-right { display: none; }
+  .print-btn { display: none; }
+  .page { padding: 20px 0; }
+  .section { break-inside: avoid; }
+  .data-table tr:hover td { background: none; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Игралишта <span class="accent">Карпош</span></h1>
+  <div class="header-right">
+    <a class="back-link" href="index.html">← Назад на мапата</a>
+    <button class="print-btn" onclick="window.print()">🖨 Печати / PDF</button>
+  </div>
+</header>
+
+<div class="page">
+  <div class="report-header">
+    <div class="report-title">Состојба на детски игралишта<br>Општина Карпош</div>
+    <div class="report-meta" id="report-meta">Граѓанско набљудување · EN 1176 / CPSC · Генерирано автоматски</div>
+  </div>
+
+  <!-- KEY NUMBERS -->
+  <div class="section">
+    <div class="section-title">Клучни показатели</div>
+    <div class="kpi-grid" id="kpi-grid"></div>
+  </div>
+
+  <!-- CONDITION DISTRIBUTION -->
+  <div class="section">
+    <div class="section-title">Распределба на состојба</div>
+    <div class="dist-wrap">
+      <div class="dist-bar" id="dist-bar"></div>
+      <div class="dist-legend" id="dist-legend"></div>
+    </div>
+  </div>
+
+  <!-- DOCUMENTED CHANGES -->
+  <div class="section" id="changes-section">
+    <div class="section-title">Документирани промени</div>
+    <p class="section-sub">Игралишта каде состојбата се промени од почетокот на набљудувањето. Ова е главниот доказ дека иницијативата работи.</p>
+    <div id="changes-list"></div>
+  </div>
+
+  <!-- TENDER ACCOUNTABILITY -->
+  <div class="section">
+    <div class="section-title">Тендерска отчетност</div>
+    <p class="section-sub">Јавни набавки за детски игралишта во Карпош — кростабела со тековната состојба на терен.</p>
+    <div id="tender-summary" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;"></div>
+    <table class="data-table" id="tender-table">
+      <thead>
+        <tr>
+          <th>Игралиште</th>
+          <th>Год.</th>
+          <th>Износ</th>
+          <th>Опфат на набавката</th>
+          <th>Тековна состојба</th>
+          <th>Евид. резултат</th>
+        </tr>
+      </thead>
+      <tbody id="tender-tbody"></tbody>
+    </table>
+    <div style="margin-top:10px;font-size:11px;color:var(--ink-soft)">
+      Извор: јавни регистри на набавки (ЕСЈН). Состојба на терен: граѓанско набљудување, мај 2025. Несовпаѓање меѓу тендер и резултат не претставува правно наодување — тоа е набљудување за јавна дискусија.
+    </div>
+  </div>
+
+  <!-- NEIGHBORHOOD BREAKDOWN -->
+  <div class="section">
+    <div class="section-title">По населба</div>
+    <div class="nbhd-grid" id="nbhd-grid"></div>
+  </div>
+
+  <!-- PRIORITY ACTION LIST -->
+  <div class="section">
+    <div class="section-title">Приоритетни игралишта за интервенција</div>
+    <p class="section-sub">Игралишта со слаба состојба и/или безбедносни проблеми — подредени по итност.</p>
+    <ol class="priority-list" id="priority-list"></ol>
+  </div>
+
+  <!-- OPEN FINDINGS -->
+  <div class="section">
+    <div class="section-title">Отворени наоди <span id="findings-count" style="font-family:'Geist',sans-serif;font-size:13px;font-weight:400;color:var(--ink-soft)"></span></div>
+    <p class="section-sub">Конкретни безбедносни наоди документирани на терен — подредени по приоритет. Секој наод е директно поврзан со набљудување и датум.</p>
+    <ul class="findings-list" id="findings-list"></ul>
+  </div>
+
+  <!-- FULL TABLE -->
+  <div class="section">
+    <div class="section-title">Сите игралишта — полна табела</div>
+    <table class="data-table" id="full-table">
+      <thead>
+        <tr>
+          <th>Игралиште</th>
+          <th>Населба</th>
+          <th>Состојба</th>
+          <th>Чистота</th>
+          <th>Безб. проблеми</th>
+          <th>До улица</th>
+          <th>Тендер</th>
+          <th>Оценето</th>
+        </tr>
+      </thead>
+      <tbody id="full-tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="report-footer">
+    <strong>Методологија:</strong> Визуелно набљудување базирано на EN 1176 (Европски стандард за детски игралишта) и CPSC Public Playground Safety Handbook. Ова не е сертифицирана инспекција. За формален наод: Општина Карпош.<br>
+    <strong>Лиценца на податоци:</strong> CC BY-SA 4.0 — слободно користење со наведување на изворот.<br>
+    <strong>Лиценца на код:</strong> MIT · <a href="index.html" style="color:var(--ink-soft)">Игралишта Карпош</a> · Граѓанска иницијатива
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script>
+// ── HELPERS ────────────────────────────────────────────────────────────────
+const COND_LABEL  = { good: '🟢 Добра', ok: '🟡 Прифатливо', poor: '🔴 Слаба' };
+const CLEAN_LABEL = { clean: '🧹 Чисто', ok: '🧹 Прифатл.', dirty: '🗑️ Нечисто' };
+const ROAD_LABEL  = { safe: '🟢 Безбедно', moderate: '🟡 Во близина', risky: '🔴 Директно' };
+const MONTHS = ['','јан','фев','мар','апр','мај','јун','јул','авг','сеп','окт','ное','дек'];
+
+function fmtDate(d) {
+  if (!d) return '—';
+  const [y, m, day] = d.split('-');
+  return `${parseInt(day)} ${MONTHS[parseInt(m)]} ${y}`;
+}
+
+function fmtAmt(s) {
+  return s || '—';
+}
+
+function parseAmt(s) {
+  if (!s) return 0;
+  return parseInt(s.replace(/\./g, '').replace(/[^\d]/g, '')) || 0;
+}
+
+// ── COMPUTE STATS ──────────────────────────────────────────────────────────
+const total = playgrounds.length;
+const cond   = { good: 0, ok: 0, poor: 0 };
+const clean  = { clean: 0, ok: 0, dirty: 0 };
+let withSafety = 0;
+let totalIssues = 0;
+
+playgrounds.forEach(p => {
+  cond[p.condition]++;
+  clean[p.cleanliness]++;
+  if (p.safety_issues.length) { withSafety++; totalIssues += p.safety_issues.length; }
+});
+
+const tenderPgs  = playgrounds.filter(p => p.tender);
+const tenderBadPgs  = tenderPgs.filter(p => p.tender.resType === 'bad');
+const tenderGoodPgs = tenderPgs.filter(p => p.tender.resType === 'ok');
+const amtBad  = tenderBadPgs.reduce((s, p) => s + parseAmt(p.tender.amt), 0);
+const amtGood = tenderGoodPgs.reduce((s, p) => s + parseAmt(p.tender.amt), 0);
+const amtTotal = tenderPgs.reduce((s, p) => s + parseAmt(p.tender.amt), 0);
+
+function fmtNum(n) {
+  return n.toLocaleString('mk-MK') + ' ден';
+}
+
+// ── REPORT META ────────────────────────────────────────────────────────────
+const assessedDates = playgrounds.map(p => p.assessed).filter(Boolean).sort();
+const latestDate = assessedDates.length ? fmtDate(assessedDates[assessedDates.length - 1]) : 'мај 2025';
+document.getElementById('report-meta').innerHTML =
+  `Граѓанско набљудување · EN 1176 / CPSC · Последна оценка: <strong>${latestDate}</strong> · ${total} игралишта`;
+
+// ── KPI GRID ───────────────────────────────────────────────────────────────
+const improved = playgrounds.filter(p =>
+  p.history && p.history.length > 0 &&
+  p.history.some(h => h.condition === 'poor' || h.condition === 'ok') &&
+  (p.condition === 'good' || p.condition === 'ok') &&
+  p.history[p.history.length - 1].condition !== p.condition
+);
+
+const kpis = [
+  { cls: '',         num: total,             lbl: 'Вкупно оценети игралишта' },
+  { cls: 'good-kpi', num: cond.good,          lbl: '<strong>Добра</strong> состојба' },
+  { cls: 'ok-kpi',   num: cond.ok,            lbl: '<strong>Прифатлива</strong> состојба' },
+  { cls: 'poor-kpi', num: cond.poor,           lbl: '<strong>Слаба</strong> состојба — потребна интервенција' },
+  { cls: 'alert-kpi',num: withSafety,          lbl: `Со <strong>безбедносни проблеми</strong> (${totalIssues} наоди)` },
+  { cls: improved.length ? 'good-kpi' : '', num: improved.length, lbl: '<strong>Документирани подобрувања</strong> од почетокот на набљудувањето' },
+];
+
+document.getElementById('kpi-grid').innerHTML = kpis.map(k =>
+  `<div class="kpi ${k.cls}">
+    <div class="kpi-num">${k.num}</div>
+    <div class="kpi-label">${k.lbl}</div>
+  </div>`).join('');
+
+// ── DISTRIBUTION BAR ───────────────────────────────────────────────────────
+const pct = c => ((cond[c] / total) * 100).toFixed(1);
+document.getElementById('dist-bar').innerHTML =
+  `<div class="dist-seg good" style="width:${pct('good')}%"></div>
+   <div class="dist-seg ok"   style="width:${pct('ok')}%"></div>
+   <div class="dist-seg poor" style="width:${pct('poor')}%"></div>`;
+document.getElementById('dist-legend').innerHTML = [
+  ['good', `Добра (${cond.good})`],
+  ['ok',   `Прифатливо (${cond.ok})`],
+  ['poor', `Слаба (${cond.poor})`],
+].map(([cls, lbl]) =>
+  `<div class="dl-item"><div class="dl-dot ${cls}"></div><span>${lbl}</span></div>`).join('');
+
+// ── TENDER ACCOUNTABILITY ──────────────────────────────────────────────────
+const tSummaryEl = document.getElementById('tender-summary');
+if (amtBad > 0) {
+  tSummaryEl.innerHTML += `
+    <div class="accountability-box bad" style="flex:1;min-width:220px">
+      <div class="acc-amount">${fmtNum(amtBad)}</div>
+      <div class="acc-label">потрошени на <strong>${tenderBadPgs.length} тендер${tenderBadPgs.length > 1 ? 'и' : ''}</strong> без евидентна промена на состојбата</div>
+    </div>`;
+}
+if (amtGood > 0) {
+  tSummaryEl.innerHTML += `
+    <div class="accountability-box good" style="flex:1;min-width:220px">
+      <div class="acc-amount">${fmtNum(amtGood)}</div>
+      <div class="acc-label">потрошени на <strong>${tenderGoodPgs.length} тендер${tenderGoodPgs.length > 1 ? 'и' : ''}</strong> со евидентно позитивен резултат</div>
+    </div>`;
+}
+
+document.getElementById('tender-tbody').innerHTML = tenderPgs.map(p => `
+  <tr>
+    <td>
+      <div class="td-name">${p.name}</div>
+      <div class="td-neighborhood">${p.neighborhood}</div>
+    </td>
+    <td>${p.tender.yr}</td>
+    <td style="white-space:nowrap;font-weight:600">${p.tender.amt}</td>
+    <td style="font-size:12px;color:var(--ink-soft)">${p.tender.scope}</td>
+    <td><span class="badge ${p.condition}">${COND_LABEL[p.condition]}</span></td>
+    <td class="${p.tender.resType === 'bad' ? 'tval-bad' : 'tval-ok'}">
+      ${p.tender.resType === 'bad' ? '❌ ' : '✅ '}${p.tender.res}
+    </td>
+  </tr>`).join('');
+
+// ── NEIGHBORHOOD GRID ──────────────────────────────────────────────────────
+const nbhds = {};
+playgrounds.forEach(p => {
+  if (!nbhds[p.neighborhood]) nbhds[p.neighborhood] = { good:0, ok:0, poor:0 };
+  nbhds[p.neighborhood][p.condition]++;
+});
+
+document.getElementById('nbhd-grid').innerHTML = Object.entries(nbhds)
+  .sort((a, b) => {
+    const scoreA = a[1].poor * 3 + a[1].ok * 1;
+    const scoreB = b[1].poor * 3 + b[1].ok * 1;
+    return scoreB - scoreA;
+  })
+  .map(([name, c]) => {
+    const t = c.good + c.ok + c.poor;
+    const gw = ((c.good/t)*100).toFixed(0);
+    const ow = ((c.ok/t)*100).toFixed(0);
+    const pw = ((c.poor/t)*100).toFixed(0);
+    return `<div class="nbhd-card">
+      <div class="nbhd-name">${name}</div>
+      <div class="nbhd-bar">
+        <div class="seg good" style="width:${gw}%;background:var(--good)"></div>
+        <div class="seg ok"   style="width:${ow}%;background:var(--ok)"></div>
+        <div class="seg poor" style="width:${pw}%;background:var(--poor)"></div>
+      </div>
+      <div class="nbhd-counts">
+        ${c.good ? `<span class="nc-g">🟢 ${c.good}</span>` : ''}
+        ${c.ok   ? `<span class="nc-o">🟡 ${c.ok}</span>`   : ''}
+        ${c.poor ? `<span class="nc-p">🔴 ${c.poor}</span>` : ''}
+        <span style="margin-left:auto;color:var(--ink-soft)">${t} вкупно</span>
+      </div>
+    </div>`;
+  }).join('');
+
+// ── PRIORITY LIST ──────────────────────────────────────────────────────────
+const priority = [...playgrounds]
+  .filter(p => p.condition === 'poor' || p.safety_issues.length > 0)
+  .sort((a, b) => {
+    const score = p => (p.condition === 'poor' ? 6 : p.condition === 'ok' ? 2 : 0)
+      + p.safety_issues.length * 2
+      + (p.tender?.resType === 'bad' ? 1 : 0);
+    return score(b) - score(a);
+  });
+
+document.getElementById('priority-list').innerHTML = priority.map((p, i) => {
+  const tags = [
+    `<span class="badge ${p.condition}">${COND_LABEL[p.condition]}</span>`,
+    p.safety_issues.length ? `<span class="issue-count">⚠️ ${p.safety_issues.length} безб. проблем${p.safety_issues.length > 1 ? 'и' : ''}</span>` : '',
+    p.tender?.resType === 'bad' ? `<span class="badge neutral">Тендер ${p.tender.yr} — без резултат</span>` : '',
+    p.road_proximity === 'risky' ? `<span class="badge neutral">🔴 Директно до улица</span>` : '',
+  ].filter(Boolean).join('');
+
+  const issuesList = p.safety_issues.length
+    ? `<div style="margin-top:6px;font-size:12px;color:var(--ink-soft)">
+        ${p.safety_issues.map(s => `• ${s}`).join('<br>')}
+       </div>` : '';
+
+  return `<li class="prio-item">
+    <div class="prio-rank">${i+1}</div>
+    <div class="prio-body">
+      <div class="prio-name">${p.name}</div>
+      <div class="prio-issues" style="color:var(--ink-soft);font-size:12px">${p.neighborhood} · ${p.address}</div>
+      ${issuesList}
+      <div class="prio-tags" style="margin-top:8px">${tags}</div>
+    </div>
+  </li>`;
+}).join('');
+
+// ── DOCUMENTED CHANGES ─────────────────────────────────────────────────────
+const changesEl = document.getElementById('changes-list');
+const changesSection = document.getElementById('changes-section');
+const allChanges = playgrounds.filter(p => p.history && p.history.length > 0);
+
+if (allChanges.length === 0) {
+  changesEl.innerHTML = `<div style="font-size:13px;color:var(--ink-soft);padding:10px 0">
+    Сè уште нема евидентирани промени. Ова ќе се пополни откако ќе се документира прво подобрување.
+  </div>`;
+} else {
+  changesEl.innerHTML = allChanges.map(p => {
+    const firstState = p.history[0];
+    const improved = firstState.condition !== p.condition;
+    const arrow = improved
+      ? `<span class="badge ${firstState.condition}">${COND_LABEL[firstState.condition]}</span>
+         <span style="margin:0 6px;color:var(--ink-soft)">→</span>
+         <span class="badge ${p.condition}">${COND_LABEL[p.condition]}</span>`
+      : `<span class="badge ${p.condition}">${COND_LABEL[p.condition]}</span> <span style="color:var(--ink-soft);font-size:12px">(без промена во состојба)</span>`;
+    return `<div style="padding:12px 0;border-bottom:1px solid var(--line)">
+      <div style="font-weight:600;margin-bottom:4px">${p.name}
+        <span style="font-weight:400;font-size:12px;color:var(--ink-soft);margin-left:6px">${p.neighborhood}</span>
+      </div>
+      <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:6px">${arrow}</div>
+      <div style="font-size:12px;color:var(--ink-soft)">
+        Прва оценка: <strong>${fmtDate(firstState.date)}</strong> · Последна: <strong>${fmtDate(p.assessed)}</strong>
+        ${firstState.note ? `<br>${firstState.note}` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── OPEN FINDINGS ──────────────────────────────────────────────────────────
+const findings = [];
+[...playgrounds]
+  .sort((a, b) => {
+    const w = p => (p.condition === 'poor' ? 2 : 1);
+    return w(b) - w(a) || (a.assessed || '').localeCompare(b.assessed || '');
+  })
+  .forEach(p => {
+    p.safety_issues.forEach(issue => {
+      findings.push({ issue, pg: p });
+    });
+  });
+
+const findingsEl = document.getElementById('findings-list');
+document.getElementById('findings-count').textContent = findings.length
+  ? `(${findings.length})` : '';
+
+if (findings.length === 0) {
+  findingsEl.innerHTML = `<li class="findings-empty">✅ Нема документирани безбедносни наоди.</li>`;
+} else {
+  findingsEl.innerHTML = findings.map(({ issue, pg }) => {
+    const isCritical = pg.condition === 'poor';
+    return `<li class="finding-item">
+      <div class="finding-dot ${isCritical ? '' : 'warn'}"></div>
+      <div class="finding-body">
+        <div class="finding-text">${issue}</div>
+        <div class="finding-meta">
+          <span class="finding-pg">📍 ${pg.name}</span>
+          <span class="finding-date">${fmtDate(pg.assessed)}</span>
+          <span class="finding-tag ${isCritical ? '' : 'warn'}">${isCritical ? '🔴 Слаба состојба' : '🟡 Прифатливо'}</span>
+          ${pg.tender?.resType === 'bad' ? `<span class="finding-tag">Тендер ${pg.tender.yr} — без резултат</span>` : ''}
+        </div>
+      </div>
+    </li>`;
+  }).join('');
+}
+
+// ── FULL TABLE ─────────────────────────────────────────────────────────────
+document.getElementById('full-tbody').innerHTML = [...playgrounds]
+  .sort((a, b) => {
+    const o = { poor: 0, ok: 1, good: 2 };
+    return o[a.condition] - o[b.condition] || b.safety_issues.length - a.safety_issues.length;
+  })
+  .map(p => {
+    const cleanCls = p.cleanliness === 'clean' ? 'clean' : p.cleanliness === 'dirty' ? 'dirty' : 'neutral';
+    const issues = p.safety_issues.length
+      ? `<span class="issue-count">⚠️ ${p.safety_issues.length}</span>` : '<span style="color:var(--ink-soft)">—</span>';
+    const tender = p.tender
+      ? `<span class="${p.tender.resType === 'bad' ? 'tval-bad' : 'tval-ok'}" style="font-size:12px">${p.tender.yr} · ${p.tender.amt}<br>${p.tender.resType === 'bad' ? '❌' : '✅'}</span>`
+      : '<span style="color:var(--ink-soft)">—</span>';
+    return `<tr>
+      <td class="td-name">${p.name}</td>
+      <td style="font-size:12px;color:var(--ink-soft)">${p.neighborhood}</td>
+      <td><span class="badge ${p.condition}">${COND_LABEL[p.condition]}</span></td>
+      <td><span class="badge ${cleanCls}">${CLEAN_LABEL[p.cleanliness]}</span></td>
+      <td>${issues}</td>
+      <td style="font-size:12px">${ROAD_LABEL[p.road_proximity]}</td>
+      <td>${tender}</td>
+      <td style="font-size:11px;color:var(--ink-soft);white-space:nowrap">${fmtDate(p.assessed)}</td>
+    </tr>`;
+  }).join('');
+</script>
+</body>
+</html>

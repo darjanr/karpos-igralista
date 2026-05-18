@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="mk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Додај игралиште — Игралишта Карпош</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f2ed; --ink: #1a1a1a; --ink-soft: #6b6560;
+  --line: #e5dfd5; --paper: #fff;
+  --good: #2a7a50; --good-bg: #eaf4f0; --good-b: #b8dece;
+  --ok: #9a6f00;   --ok-bg: #fdf5e0;   --ok-b: #e8d080;
+  --poor: #b83030; --poor-bg: #fdf0f0; --poor-b: #e8b0b0;
+  --accent: #b83030;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: var(--bg); color: var(--ink);
+  font-family: 'Geist', -apple-system, sans-serif; font-size: 15px;
+  line-height: 1.5; -webkit-font-smoothing: antialiased; }
+
+header { border-bottom: 1px solid var(--line); padding: 14px 22px;
+  background: var(--paper); display: flex; justify-content: space-between;
+  align-items: center; position: sticky; top: 0; z-index: 100; }
+h1 { font-family: 'Fraunces', serif; font-weight: 800; font-size: 20px; letter-spacing: -.02em; }
+h1 .accent { color: var(--accent); font-style: italic; }
+.back-btn { font-size: 12px; color: var(--ink-soft); text-decoration: none;
+  padding: 5px 10px; border: 1px solid var(--line); border-radius: 5px; }
+.back-btn:hover { border-color: var(--ink-soft); color: var(--ink); }
+
+.page { max-width: 640px; margin: 0 auto; padding: 24px 20px 60px; }
+
+.page-title { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 800;
+  margin-bottom: 6px; letter-spacing: -.02em; }
+.page-sub { font-size: 13px; color: var(--ink-soft); line-height: 1.6; margin-bottom: 28px; }
+
+/* Progress */
+.progress { display: flex; gap: 4px; margin-bottom: 28px; }
+.prog-step { flex: 1; height: 3px; border-radius: 2px; background: var(--line);
+  transition: background .2s; }
+.prog-step.done { background: var(--ink); }
+.prog-step.active { background: var(--accent); }
+
+/* Section */
+.section { background: var(--paper); border: 1px solid var(--line); border-radius: 10px;
+  padding: 20px; margin-bottom: 14px; }
+.section-title { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 600;
+  margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+.section-title .snum { width: 22px; height: 22px; border-radius: 50%; background: var(--ink);
+  color: var(--paper); font-family: 'Geist', sans-serif; font-size: 11px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.section-desc { font-size: 12px; color: var(--ink-soft); margin-bottom: 16px; }
+
+/* Form fields */
+.field { margin-bottom: 14px; }
+.field:last-child { margin-bottom: 0; }
+label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px;
+  color: var(--ink-soft); text-transform: uppercase; letter-spacing: .04em; }
+label .req { color: var(--accent); }
+input[type=text], input[type=email], input[type=number], textarea, select {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 7px;
+  font-family: inherit; font-size: 14px; background: var(--paper); color: var(--ink);
+  transition: border-color .13s; -webkit-appearance: none; }
+input:focus, textarea:focus, select:focus { outline: none; border-color: var(--ink); }
+textarea { resize: vertical; min-height: 80px; }
+
+/* Radio/chip groups */
+.chip-group { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { position: relative; }
+.chip input { position: absolute; opacity: 0; width: 0; height: 0; }
+.chip label {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 13px; border: 1.5px solid var(--line); border-radius: 8px;
+  cursor: pointer; font-size: 13px; font-weight: 500; color: var(--ink-soft);
+  text-transform: none; letter-spacing: 0;
+  transition: all .13s; background: var(--paper); }
+.chip input:checked + label { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+
+/* Condition chips */
+.chip.good input:checked + label  { border-color: var(--good); background: var(--good-bg); color: var(--good); }
+.chip.ok   input:checked + label  { border-color: var(--ok);   background: var(--ok-bg);   color: var(--ok); }
+.chip.poor input:checked + label  { border-color: var(--poor); background: var(--poor-bg); color: var(--poor); }
+
+/* Checkbox chips */
+.chip.check input:checked + label { border-color: var(--good); background: var(--good-bg); color: var(--good); }
+
+/* Toggle row */
+.toggle-row { display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 0; border-bottom: 1px solid var(--line); }
+.toggle-row:last-child { border-bottom: none; padding-bottom: 0; }
+.toggle-row:first-child { padding-top: 0; }
+.toggle-label { font-size: 13px; }
+.toggle-label small { font-size: 11px; color: var(--ink-soft); display: block; }
+.toggle { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-track { position: absolute; inset: 0; background: var(--line); border-radius: 11px;
+  cursor: pointer; transition: background .15s; }
+.toggle input:checked + .toggle-track { background: var(--good); }
+.toggle-track::after { content: ''; position: absolute; width: 16px; height: 16px;
+  border-radius: 50%; background: white; top: 3px; left: 3px;
+  transition: transform .15s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+.toggle input:checked + .toggle-track::after { transform: translateX(18px); }
+
+/* Photo upload */
+.photo-area { border: 2px dashed var(--line); border-radius: 10px;
+  padding: 20px; text-align: center; cursor: pointer;
+  transition: border-color .13s; position: relative; }
+.photo-area:hover { border-color: var(--ink-soft); }
+.photo-area input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.photo-area-text { font-size: 13px; color: var(--ink-soft); }
+.photo-area-icon { font-size: 28px; margin-bottom: 6px; }
+.photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+.photo-thumb-wrap { position: relative; aspect-ratio: 4/3; }
+.photo-thumb-wrap img { width: 100%; height: 100%; object-fit: cover; border-radius: 7px;
+  border: 1px solid var(--line); }
+.photo-remove { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px;
+  border-radius: 50%; background: rgba(0,0,0,.6); color: white; border: none;
+  cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; }
+.photo-slot-label { position: absolute; bottom: 0; left: 0; right: 0;
+  background: rgba(0,0,0,.5); color: white; font-size: 9px; text-align: center;
+  padding: 2px; border-radius: 0 0 7px 7px; text-transform: uppercase; letter-spacing: .04em; }
+.photo-limit { font-size: 11px; color: var(--ink-soft); margin-top: 6px; }
+
+/* Equipment rows */
+.eq-rows { display: flex; flex-direction: column; gap: 8px; }
+.eq-row { display: grid; grid-template-columns: 1fr 60px 120px 28px;
+  gap: 6px; align-items: center; }
+.eq-row select, .eq-row input[type=number] { padding: 8px 10px; }
+.eq-cond { display: flex; gap: 3px; }
+.eq-cond-btn { width: 22px; height: 22px; border-radius: 4px; border: 1px solid var(--line);
+  background: var(--paper); cursor: pointer; font-size: 11px; display: flex;
+  align-items: center; justify-content: center; transition: all .1s; color: var(--ink-soft); }
+.eq-cond-btn.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.eq-remove { background: none; border: none; cursor: pointer; color: var(--ink-soft);
+  font-size: 16px; padding: 2px; line-height: 1; }
+.eq-remove:hover { color: var(--poor); }
+.add-eq-btn { margin-top: 8px; padding: 8px 14px; font-size: 12px; font-family: inherit;
+  border: 1px dashed var(--line); border-radius: 7px; background: transparent;
+  cursor: pointer; color: var(--ink-soft); width: 100%; }
+.add-eq-btn:hover { border-color: var(--ink-soft); color: var(--ink); }
+
+/* Stepper */
+.stepper { display: flex; align-items: center; gap: 10px; }
+.stepper button { width: 32px; height: 32px; border: 1px solid var(--line); border-radius: 6px;
+  background: var(--paper); cursor: pointer; font-size: 18px; display: flex;
+  align-items: center; justify-content: center; color: var(--ink); transition: all .1s; }
+.stepper button:hover { border-color: var(--ink); }
+.stepper .val { font-size: 16px; font-weight: 600; min-width: 30px; text-align: center; }
+
+/* GPS row */
+.gps-row { display: flex; gap: 8px; }
+.gps-row input { flex: 1; }
+.gps-btn { padding: 10px 14px; border: 1px solid var(--line); border-radius: 7px;
+  background: var(--paper); cursor: pointer; font-size: 12px; font-family: inherit;
+  white-space: nowrap; color: var(--ink-soft); transition: all .13s; }
+.gps-btn:hover { border-color: var(--ink); color: var(--ink); }
+.gps-btn.loading { opacity: .6; pointer-events: none; }
+
+/* Submit section */
+.submit-section { background: var(--ink); color: var(--paper); border-radius: 10px;
+  padding: 20px; margin-top: 20px; }
+.submit-title { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+.submit-desc { font-size: 12px; opacity: .75; line-height: 1.6; margin-bottom: 16px; }
+.submit-btn { width: 100%; padding: 14px; background: var(--paper); color: var(--ink);
+  border: none; border-radius: 8px; font-family: inherit; font-size: 15px;
+  font-weight: 600; cursor: pointer; transition: opacity .13s; }
+.submit-btn:hover { opacity: .9; }
+.submit-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Success screen */
+.success { display: none; text-align: center; padding: 60px 20px; }
+.success.show { display: block; }
+.success-icon { font-size: 52px; margin-bottom: 16px; }
+.success-title { font-family: 'Fraunces', serif; font-size: 24px; font-weight: 800; margin-bottom: 10px; }
+.success-text { font-size: 14px; color: var(--ink-soft); line-height: 1.7; max-width: 400px; margin: 0 auto 24px; }
+.success-back { padding: 12px 24px; background: var(--ink); color: var(--paper);
+  border: none; border-radius: 8px; font-family: inherit; font-size: 14px;
+  font-weight: 500; cursor: pointer; text-decoration: none; display: inline-block; }
+
+.note { font-size: 11px; color: var(--ink-soft); margin-top: 5px; line-height: 1.5; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 480px) { .field-row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<!-- Netlify Forms detector -->
+<form name="novo-igraliste" netlify hidden><input name="data" /></form>
+<header>
+  <h1>Игралишта <span class="accent">Карпош</span></h1>
+  <a class="back-btn" href="index.html">← Назад на мапата</a>
+</header>
+
+<div class="page">
+
+  <!-- SUCCESS STATE (hidden) -->
+  <div class="success" id="success-screen">
+    <div class="success-icon">🗺️</div>
+    <div class="success-title">Набљудувањето е примено!</div>
+    <div class="success-text">
+      Благодариме. Ќе го верифицираме во рок од 1–3 дена и игралиштето ќе стане
+      видливо на јавната мапа за сите родители во Карпош.<br><br>
+      Секое документирано игралиште е еден аргумент повеќе кон општината.
+    </div>
+    <a class="success-back" href="index.html">← Назад на мапата</a>
+  </div>
+
+  <!-- FORM -->
+  <div id="form-wrap">
+    <div class="page-title">Стани набљудувач</div>
+    <div class="page-sub">
+      Твоето теренско набљудување им помага на родителите во Карпош да изберат безбедно место за своите деца —
+      и станува дел од јавна евиденција со која притискаме за подобрување.
+      Потребни се 10–15 минути и неколку фотографии.
+      <br><br>
+      <strong>11 игралишта документирани</strong> — помогни да стигнеме до 20.
+    </div>
+
+    <div class="progress">
+      <div class="prog-step done" id="ps1"></div>
+      <div class="prog-step" id="ps2"></div>
+      <div class="prog-step" id="ps3"></div>
+      <div class="prog-step" id="ps4"></div>
+      <div class="prog-step" id="ps5"></div>
+    </div>
+
+    <form id="main-form" onsubmit="handleSubmit(event)">
+
+      <!-- ① ЛОКАЦИЈА -->
+      <div class="section">
+        <div class="section-title"><span class="snum">1</span> Локација</div>
+        <div class="section-desc">Каде се наоѓа игралиштето?</div>
+
+        <div class="field">
+          <label>Адреса или опис на локацијата <span class="req">*</span></label>
+          <input type="text" name="address" placeholder="пр. ул. Лазар Личеноски бб, до блок 12" required />
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Квартал <span class="req">*</span></label>
+            <select name="neighborhood" required>
+              <option value="">— избери —</option>
+              <option>Карпош 1</option><option>Карпош 2</option>
+              <option>Карпош 3</option><option>Карпош 4</option>
+              <option>Тафталиџе 1</option><option>Тафталиџе 2</option>
+              <option>Влае</option><option>Козле</option>
+              <option>Нерези</option><option>Друго</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>GPS координати</label>
+            <div class="gps-row">
+              <input type="text" name="gps" id="gps-input" placeholder="41.998, 21.412" />
+              <button type="button" class="gps-btn" id="gps-btn" onclick="getGPS()">📍 Детектирај</button>
+            </div>
+            <div class="note">Или копирај ги координатите од Google Maps.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ② ФОТОГРАФИИ -->
+      <div class="section">
+        <div class="section-title"><span class="snum">2</span> Фотографии</div>
+        <div class="section-desc">
+          До 6 фотографии. Прва е задолжителна — општ изглед од влезот.
+          Никогаш не фотографирај деца.
+        </div>
+
+        <div class="photo-area" id="photo-area" onclick="document.getElementById('photo-input').click()">
+          <input type="file" id="photo-input" accept="image/*" multiple onchange="addPhotos(event)" />
+          <div class="photo-area-icon">📷</div>
+          <div class="photo-area-text">Допри за да додадеш фотографии</div>
+        </div>
+        <div class="photo-grid" id="photo-grid"></div>
+        <div class="photo-limit" id="photo-limit"></div>
+
+        <div style="margin-top:12px">
+          <label>Или: линк до Google Drive / Photos фолдер</label>
+          <input type="text" name="photo_link" placeholder="https://drive.google.com/..." />
+          <div class="note">Ако не можеш да ги прикачиш директно, сподели ги преку Drive.</div>
+        </div>
+      </div>
+
+      <!-- ③ ОЦЕНКА -->
+      <div class="section">
+        <div class="section-title"><span class="snum">3</span> Оценка на состојбата</div>
+        <div class="section-desc">Оцени ја целокупната состојба — не само безбедноста.</div>
+
+        <div class="field">
+          <label>Општа состојба <span class="req">*</span></label>
+          <div class="chip-group">
+            <div class="chip good">
+              <input type="radio" name="condition" id="c-good" value="good" required />
+              <label for="c-good">🟢 Добра — пријатно за посета, опремата е во ред</label>
+            </div>
+            <div class="chip ok">
+              <input type="radio" name="condition" id="c-ok" value="ok" />
+              <label for="c-ok">🟡 Прифатливо — употребливо но со видливи проблеми</label>
+            </div>
+            <div class="chip poor">
+              <input type="radio" name="condition" id="c-poor" value="poor" />
+              <label for="c-poor">🔴 Слаба — лошо одржувано или небезбедно</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Дали има безбедносен проблем? (EN 1176)</label>
+          <div class="chip-group">
+            <div class="chip">
+              <input type="radio" name="has_safety" id="sf-no" value="no" />
+              <label for="sf-no">Не — нема видливи опасности</label>
+            </div>
+            <div class="chip">
+              <input type="radio" name="has_safety" id="sf-yes" value="yes" />
+              <label for="sf-yes">Да — опиши подолу</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="field" id="safety-detail" style="display:none">
+          <label>Опиши ги безбедносните проблеми</label>
+          <textarea name="safety_issues" placeholder="пр. Скршен дел на тобоган со остар метален раб. Бетон под лулашките..."></textarea>
+          <div class="note">Фокусирај се на конкретни видливи ризици: остри рабови, скршени делови, несигурни конструкции, неадекватна подлога.</div>
+        </div>
+
+        <div class="field">
+          <label>Сообраќај <span class="req">*</span></label>
+          <div class="chip-group">
+            <div class="chip">
+              <input type="radio" name="road_proximity" id="r-safe" value="safe" required />
+              <label for="r-safe">🟢 Безбедно — далеку или во средина на парк</label>
+            </div>
+            <div class="chip">
+              <input type="radio" name="road_proximity" id="r-mod" value="moderate" />
+              <label for="r-mod">🟡 Улица е блиску — но постои тротоар / паркинг</label>
+            </div>
+            <div class="chip">
+              <input type="radio" name="road_proximity" id="r-risk" value="risky" />
+              <label for="r-risk">🔴 Директно до улица — дете може да излезе веднаш</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Напомена за сообраќај (опционално)</label>
+          <input type="text" name="road_note" placeholder="пр. Улица на источната страна, паркирани коли делуваат како бафер" />
+        </div>
+
+        <div class="field">
+          <label>Чистота на игралиштето <span class="req">*</span></label>
+          <div class="chip-group">
+            <div class="chip good">
+              <input type="radio" name="cleanliness" id="cl-clean" value="clean" required />
+              <label for="cl-clean">🧹 Чисто — без ѓубре, без фекалии, нема опасни предмети</label>
+            </div>
+            <div class="chip ok">
+              <input type="radio" name="cleanliness" id="cl-ok" value="ok" />
+              <label for="cl-ok">🟡 Прифатливо — малку ѓубре, графити, нечист песочник</label>
+            </div>
+            <div class="chip poor">
+              <input type="radio" name="cleanliness" id="cl-dirty" value="dirty" />
+              <label for="cl-dirty">🗑️ Нечисто — ѓубре, фекалии, шприци или стакло</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ④ ОПРЕМА -->
+      <div class="section">
+        <div class="section-title"><span class="snum">4</span> Опрема</div>
+        <div class="section-desc">Наброј ја опремата. Состојба: 1 = скршено, 5 = одлично.</div>
+
+        <div class="field">
+          <label>Големина на игралиштето</label>
+          <div class="chip-group">
+            <div class="chip"><input type="radio" name="size" id="sz-s" value="small" /><label for="sz-s">Мало (1–3 елементи)</label></div>
+            <div class="chip"><input type="radio" name="size" id="sz-m" value="medium" /><label for="sz-m">Средно (4–7 елементи)</label></div>
+            <div class="chip"><input type="radio" name="size" id="sz-l" value="large" /><label for="sz-l">Големо (8+)</label></div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Список на опрема</label>
+          <div class="eq-rows" id="eq-rows">
+            <!-- rows added dynamically -->
+          </div>
+          <button type="button" class="add-eq-btn" onclick="addEquipmentRow()">+ Додај опрема</button>
+        </div>
+
+        <div class="field">
+          <label>Подлога</label>
+          <div class="chip-group">
+            <div class="chip"><input type="radio" name="surface" id="su-rubber" value="гумирана" /><label for="su-rubber">Гумирана</label></div>
+            <div class="chip"><input type="radio" name="surface" id="su-sand" value="песок" /><label for="su-sand">Песок</label></div>
+            <div class="chip"><input type="radio" name="surface" id="su-grass" value="трева" /><label for="su-grass">Трева</label></div>
+            <div class="chip"><input type="radio" name="surface" id="su-gravel" value="чакал" /><label for="su-gravel">Чакал</label></div>
+            <div class="chip"><input type="radio" name="surface" id="su-concrete" value="бетон" /><label for="su-concrete">Бетон</label></div>
+          </div>
+          <div class="note" style="margin-top:8px">Состојба на подлогата:</div>
+          <div class="chip-group" style="margin-top:6px">
+            <div class="chip"><input type="radio" name="surface_cond" id="sc-good" value="good" /><label for="sc-good">Добра</label></div>
+            <div class="chip"><input type="radio" name="surface_cond" id="sc-worn" value="worn" /><label for="sc-worn">Истрошена</label></div>
+            <div class="chip"><input type="radio" name="surface_cond" id="sc-bad" value="bad" /><label for="sc-bad">Лоша / неадекватна</label></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ⑤ УДОБНОСТ -->
+      <div class="section">
+        <div class="section-title"><span class="snum">5</span> Удобност и пристап</div>
+        <div class="section-desc">Информации за родителите кои избираат каде да го одведат детето.</div>
+
+        <div class="field">
+          <label>Возрасна група (може повеќе)</label>
+          <div class="chip-group">
+            <div class="chip check"><input type="checkbox" name="age_range" id="ag-t" value="toddler" /><label for="ag-t">👶 0–3 год</label></div>
+            <div class="chip check"><input type="checkbox" name="age_range" id="ag-s" value="school" /><label for="ag-s">🧒 3–12 год</label></div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Сенка</label>
+          <div class="chip-group">
+            <div class="chip"><input type="radio" name="shade" id="sh-none" value="none" /><label for="sh-none">🌞 Нема</label></div>
+            <div class="chip"><input type="radio" name="shade" id="sh-part" value="partial" /><label for="sh-part">⛅ Делумна</label></div>
+            <div class="chip"><input type="radio" name="shade" id="sh-good" value="good" /><label for="sh-good">🌳 Добра</label></div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Клупи за родители</label>
+          <div class="stepper">
+            <button type="button" onclick="stepBenches(-1)">−</button>
+            <span class="val" id="benches-val">0</span>
+            <button type="button" onclick="stepBenches(1)">+</button>
+            <input type="hidden" name="benches" id="benches-input" value="0" />
+            <span style="font-size:13px;color:var(--ink-soft)">клупи</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Типична гужва</label>
+          <div class="chip-group">
+            <div class="chip"><input type="radio" name="crowdedness" id="cr-quiet" value="quiet" /><label for="cr-quiet">🔇 Тивко</label></div>
+            <div class="chip"><input type="radio" name="crowdedness" id="cr-mod" value="moderate" /><label for="cr-mod">👥 Умерено</label></div>
+            <div class="chip"><input type="radio" name="crowdedness" id="cr-busy" value="busy" /><label for="cr-busy">🔊 Гужва</label></div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Достапност и карактеристики</label>
+          <div class="toggle-row">
+            <div class="toggle-label">🚧 Оградено игралиште<small>Метална решетка или жива ограда</small></div>
+            <label class="toggle"><input type="checkbox" name="fenced" value="1" /><div class="toggle-track"></div></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-label">🛴 Погодно за тротинети и велосипеди<small>Патека или простор за возење</small></div>
+            <label class="toggle"><input type="checkbox" name="bikes_ok" value="1" /><div class="toggle-track"></div></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-label">💧 Вода за пиење во близина<small>Чешма, продавница, кафе</small></div>
+            <label class="toggle"><input type="checkbox" name="water_nearby" value="1" /><div class="toggle-track"></div></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-label">🚽 Тоалет во близина<small>Јавен тоалет, кафе, установа</small></div>
+            <label class="toggle"><input type="checkbox" name="toilet_nearby" value="1" /><div class="toggle-track"></div></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-label">🏪 Продавница во близина<small>До ~5 мин пешки</small></div>
+            <label class="toggle"><input type="checkbox" name="store_nearby" value="1" /><div class="toggle-track"></div></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-label">💡 Осветлување за вечер<small>Функционални светилки</small></div>
+            <label class="toggle"><input type="checkbox" name="lighting" value="1" /><div class="toggle-track"></div></label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Забелешки (опционално)</label>
+          <textarea name="notes" placeholder="Сè друго корисно за родителите — пристап со количка, атмосфера, специфични детали..."></textarea>
+        </div>
+      </div>
+
+      <!-- ⑥ ЗА ТЕБЕ -->
+      <div class="section">
+        <div class="section-title"><span class="snum">6</span> Твојот придонес</div>
+        <div class="section-desc">Остави е-маил ако сакаш да те известиме кога игралиштето ќе биде активно на јавната мапа — или ако имаме прашање за набљудувањето. Не е задолжително.</div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Име</label>
+            <input type="text" name="submitter_name" placeholder="Марија" />
+          </div>
+          <div class="field">
+            <label>Е-маил</label>
+            <input type="email" name="submitter_email" placeholder="marija@..." />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Датум на посета</label>
+          <input type="text" name="visit_date" id="visit-date" />
+        </div>
+      </div>
+
+      <!-- SUBMIT -->
+      <div class="submit-section">
+        <div class="submit-title">Спремно за испраќање?</div>
+        <div class="submit-desc">
+          Ќе го прегледаме поднесокот во рок од 1–3 дена. Ако сè е во ред,
+          игралиштето ќе се појави на мапата. Не објавуваме без проверка.
+        </div>
+        <button type="submit" class="submit-btn">Испрати поднесување →</button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<script>
+// ── SAFETY DETAIL TOGGLE ──────────────────────────────────────────────────────
+document.querySelectorAll('input[name=has_safety]').forEach(r => {
+  r.addEventListener('change', () => {
+    document.getElementById('safety-detail').style.display =
+      r.value === 'yes' && r.checked ? 'block' : 'none';
+  });
+});
+
+// ── GPS ───────────────────────────────────────────────────────────────────────
+function getGPS() {
+  const btn = document.getElementById('gps-btn');
+  btn.textContent = '⏳ Барам...'; btn.classList.add('loading');
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const { latitude: lat, longitude: lon } = pos.coords;
+      document.getElementById('gps-input').value = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+      btn.textContent = '✅ Добиено'; btn.classList.remove('loading');
+    },
+    () => { btn.textContent = '❌ Грешка'; btn.classList.remove('loading'); }
+  );
+}
+
+// ── PHOTOS ────────────────────────────────────────────────────────────────────
+const MAX_PHOTOS = 6;
+const PHOTO_LABELS = ['Општ изглед (задолжително)', 'Опрема', 'Подлога', 'Проблем', 'Родителска зона', 'Друго'];
+let photos = [];
+
+function addPhotos(e) {
+  const files = Array.from(e.target.files);
+  files.forEach(f => {
+    if (photos.length >= MAX_PHOTOS) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      photos.push({ file: f, url: ev.target.result });
+      renderPhotos();
+    };
+    reader.readAsDataURL(f);
+  });
+  e.target.value = '';
+}
+
+function removePhoto(i) {
+  photos.splice(i, 1); renderPhotos();
+}
+
+function renderPhotos() {
+  const grid = document.getElementById('photo-grid');
+  const limit = document.getElementById('photo-limit');
+  grid.innerHTML = photos.map((p, i) => `
+    <div class="photo-thumb-wrap">
+      <img src="${p.url}" alt="Фото ${i+1}" />
+      <button type="button" class="photo-remove" onclick="removePhoto(${i})">✕</button>
+      <div class="photo-slot-label">${PHOTO_LABELS[i] || 'Фото ' + (i+1)}</div>
+    </div>`).join('');
+  limit.textContent = photos.length >= MAX_PHOTOS
+    ? `Максимум ${MAX_PHOTOS} фотографии.`
+    : `${photos.length} / ${MAX_PHOTOS} фотографии. ${photos.length === 0 ? 'Прва е задолжителна.' : ''}`;
+  const area = document.getElementById('photo-area');
+  area.style.display = photos.length >= MAX_PHOTOS ? 'none' : 'block';
+}
+renderPhotos();
+
+// ── EQUIPMENT ROWS ────────────────────────────────────────────────────────────
+const EQ_TYPES = ['Лулашки', 'Тобоган', 'Качувалка / Кула', 'Нишалки', 'Песочник',
+  'Кружно ринче', 'Пружински игри', 'Клупи за родители', 'Канта за ѓубре', 'Друго'];
+let eqCounter = 0;
+
+function addEquipmentRow(type = '', count = 1, cond = 3) {
+  const id = ++eqCounter;
+  const row = document.createElement('div');
+  row.className = 'eq-row'; row.id = `eq-${id}`;
+  const opts = EQ_TYPES.map(t => `<option${t===type?' selected':''}>${t}</option>`).join('');
+  const dots = [1,2,3,4,5].map(n =>
+    `<button type="button" class="eq-cond-btn${n<=cond?' active':''}" onclick="setEqCond(${id},${n})">${n}</button>`
+  ).join('');
+  row.innerHTML = `
+    <select name="eq_type_${id}">${opts}</select>
+    <input type="number" name="eq_count_${id}" value="${count}" min="1" max="20" />
+    <div class="eq-cond" id="eq-cond-${id}">${dots}</div>
+    <button type="button" class="eq-remove" onclick="document.getElementById('eq-${id}').remove()">×</button>`;
+  document.getElementById('eq-rows').appendChild(row);
+}
+
+function setEqCond(id, val) {
+  document.querySelectorAll(`#eq-cond-${id} .eq-cond-btn`).forEach((b, i) => {
+    b.classList.toggle('active', i < val);
+  });
+}
+
+// Pre-add common types
+['Лулашки', 'Тобоган', 'Клупи за родители'].forEach(t => addEquipmentRow(t));
+
+// ── BENCHES STEPPER ───────────────────────────────────────────────────────────
+let benches = 0;
+function stepBenches(d) {
+  benches = Math.max(0, benches + d);
+  document.getElementById('benches-val').textContent = benches;
+  document.getElementById('benches-input').value = benches;
+}
+
+// ── DATE DEFAULT ──────────────────────────────────────────────────────────────
+const today = new Date();
+document.getElementById('visit-date').value =
+  `${today.getDate().toString().padStart(2,'0')}.${(today.getMonth()+1).toString().padStart(2,'0')}.${today.getFullYear()}`;
+
+// ── PROGRESS ──────────────────────────────────────────────────────────────────
+const sections = document.querySelectorAll('.section');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const idx = Array.from(sections).indexOf(e.target);
+      document.querySelectorAll('.prog-step').forEach((s, i) => {
+        s.className = 'prog-step ' + (i < idx ? 'done' : i === idx ? 'active' : '');
+      });
+    }
+  });
+}, { threshold: 0.3 });
+sections.forEach(s => observer.observe(s));
+
+// ── SUBMIT ────────────────────────────────────────────────────────────────────
+async function handleSubmit(e) {
+  e.preventDefault();
+  const form = e.target;
+  const data = new FormData(form);
+
+  // Validate photos
+  if (photos.length === 0) {
+    alert('Додај барем една фотографија (општ изглед на игралиштето).');
+    return;
+  }
+
+  // Collect equipment rows
+  const eqData = [];
+  document.querySelectorAll('.eq-row').forEach(row => {
+    const id = row.id.replace('eq-', '');
+    const type = row.querySelector(`[name=eq_type_${id}]`)?.value;
+    const count = row.querySelector(`[name=eq_count_${id}]`)?.value;
+    const activeDots = row.querySelectorAll('.eq-cond-btn.active').length;
+    if (type) eqData.push({ type, count, condition: activeDots });
+  });
+
+  // Build payload (ready for Supabase or Formspree)
+  const payload = {
+    address:        data.get('address'),
+    neighborhood:   data.get('neighborhood'),
+    gps:            data.get('gps'),
+    condition:      data.get('condition'),
+    has_safety:     data.get('has_safety'),
+    safety_issues:  data.get('safety_issues') || '',
+    road_proximity: data.get('road_proximity'),
+    road_note:      data.get('road_note'),
+    size:           data.get('size'),
+    surface:        data.get('surface'),
+    surface_cond:   data.get('surface_cond'),
+    shade:          data.get('shade'),
+    benches:        data.get('benches'),
+    crowdedness:    data.get('crowdedness'),
+    fenced:         data.get('fenced') === '1',
+    bikes_ok:       data.get('bikes_ok') === '1',
+    water_nearby:   data.get('water_nearby') === '1',
+    toilet_nearby:  data.get('toilet_nearby') === '1',
+    store_nearby:   data.get('store_nearby') === '1',
+    lighting:       data.get('lighting') === '1',
+    age_range:      data.getAll('age_range'),
+    notes:          data.get('notes'),
+    equipment:      eqData,
+    photo_count:    photos.length,
+    photo_link:     data.get('photo_link'),
+    submitter_name:  data.get('submitter_name'),
+    submitter_email: data.get('submitter_email'),
+    visit_date:     data.get('visit_date'),
+    submitted_at:   new Date().toISOString(),
+    status:         'pending',
+  };
+
+  console.log('Submission payload:', payload);
+
+  try {
+    await fetch('/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ 'form-name': 'novo-igraliste', data: JSON.stringify(payload) }),
+    });
+  } catch(err) {
+    console.warn('Netlify Forms error:', err);
+  }
+
+  document.getElementById('form-wrap').style.display = 'none';
+  document.getElementById('success-screen').classList.add('show');
+  window.scrollTo(0, 0);
+}
+</script>
+</body>
+</html>

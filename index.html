@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="mk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Игралишта Карпош — мапа и состојба</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root {
+  --bg: #f5f2ed;
+  --ink: #1a1a1a;
+  --ink-soft: #6b6560;
+  --line: #e5dfd5;
+  --paper: #ffffff;
+  --good: #2a7a50; --good-bg: #eaf4f0; --good-b: #b8dece;
+  --ok: #9a6f00;   --ok-bg: #fdf5e0;   --ok-b: #e8d080;
+  --poor: #b83030; --poor-bg: #fdf0f0; --poor-b: #e8b0b0;
+  --panel-w: 420px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--ink);
+  font-family: 'Geist', -apple-system, sans-serif; font-size: 15px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased; }
+
+header { position: relative; z-index: 20; border-bottom: 1px solid var(--line);
+  padding: 12px 22px; background: var(--paper); display: flex;
+  justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+h1 { font-family: 'Fraunces', serif; font-weight: 800; font-size: 22px;
+  letter-spacing: -0.02em; line-height: 1; }
+h1 .accent { color: var(--poor); font-style: italic; }
+.header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.header-stat { font-size: 12px; color: var(--ink-soft); }
+.header-stat strong { color: var(--ink); }
+.method-badge { font-size: 10px; letter-spacing: .06em; text-transform: uppercase;
+  padding: 3px 8px; border: 1px solid var(--line); border-radius: 3px; color: var(--ink-soft); }
+.stats-link { font-size: 12px; color: var(--ink-soft); text-decoration: none;
+  padding: 5px 11px; border: 1px solid var(--line); border-radius: 5px; transition: all .13s; }
+.stats-link:hover { color: var(--ink); border-color: var(--ink-soft); }
+.add-btn { font-size: 12px; font-family: inherit; padding: 5px 12px;
+  background: var(--ink); color: var(--paper); border: none; border-radius: 5px;
+  cursor: pointer; text-decoration: none; display: inline-block; }
+
+.app { display: grid; grid-template-columns: 320px 1fr; height: calc(100vh - 49px); }
+@media (max-width: 760px) {
+  .app { grid-template-columns: 1fr; grid-template-rows: 42vh 1fr; }
+  #map-wrap { order: -1; }
+}
+
+.sidebar { background: var(--paper); border-right: 1px solid var(--line);
+  display: flex; flex-direction: column; overflow: hidden; }
+.sb-top { padding: 16px 18px 12px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
+.sb-tagline { font-size: 12px; color: var(--ink-soft); line-height: 1.6; }
+
+.filters { padding: 10px 18px 12px; border-bottom: 1px solid var(--line); display: flex;
+  flex-direction: column; gap: 6px; flex-shrink: 0; }
+.filter-row { display: flex; gap: 5px; align-items: center; }
+.fbtn { padding: 4px 10px; font-size: 11px; font-family: inherit; border: 1px solid var(--line);
+  border-radius: 20px; background: transparent; color: var(--ink-soft); cursor: pointer; transition: all .13s; }
+.fbtn:hover { border-color: var(--ink-soft); color: var(--ink); }
+.fbtn.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.neigh-wrap { position: relative; display: inline-flex; align-items: center; }
+.neigh-sel { padding: 4px 22px 4px 10px; font-size: 11px; font-family: inherit;
+  border: 1px solid var(--line); border-radius: 20px;
+  background: transparent; color: var(--ink-soft); cursor: pointer;
+  appearance: none; -webkit-appearance: none; transition: all .13s; }
+.neigh-sel:focus { outline: none; }
+.neigh-sel:hover { border-color: var(--ink-soft); color: var(--ink); }
+.neigh-sel.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.neigh-wrap::after { content: '▾'; position: absolute; right: 9px; font-size: 10px;
+  color: var(--ink-soft); pointer-events: none; line-height: 1; }
+.neigh-wrap.active::after { color: var(--paper); }
+
+.list-scroll { flex: 1; overflow-y: auto; padding: 10px 12px; }
+.list-label { font-size: 10px; text-transform: uppercase; letter-spacing: .07em;
+  color: var(--ink-soft); padding: 2px 4px 8px; }
+
+.pg-card { padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px;
+  margin-bottom: 5px; cursor: pointer; transition: border-color .13s, box-shadow .13s; background: var(--paper); }
+.pg-card:hover { border-color: #bbb; box-shadow: 0 1px 5px rgba(0,0,0,.06); }
+.pg-card.active { border-color: var(--ink); background: #f8f5f0; }
+.pg-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.pg-name { font-size: 13px; font-weight: 600; line-height: 1.3; flex: 1; }
+.pg-neigh { font-size: 11px; color: var(--ink-soft); margin-top: 1px; }
+.pg-rating { font-size: 12px; font-weight: 700; flex-shrink: 0; padding: 2px 7px;
+  border-radius: 4px; line-height: 1.5; margin-top: 1px; }
+.pg-rating.good { background: var(--good-bg); color: var(--good); }
+.pg-rating.ok   { background: var(--ok-bg);   color: var(--ok); }
+.pg-rating.poor { background: var(--poor-bg); color: var(--poor); }
+.pg-tags { margin-top: 5px; display: flex; gap: 4px; overflow: hidden; }
+.ptag { display: inline-block; font-size: 10px; padding: 1px 7px; border-radius: 3px; white-space: nowrap; flex-shrink: 0; }
+.ptag.good { background: var(--good-bg); color: var(--good); border: 1px solid var(--good-b); }
+.ptag.ok   { background: var(--ok-bg);   color: var(--ok);   border: 1px solid var(--ok-b); }
+.ptag.poor { background: var(--poor-bg); color: var(--poor); border: 1px solid var(--poor-b); }
+.ptag.warn { background: var(--poor-bg); color: var(--poor); border: 1px solid var(--poor-b); }
+.ptag.muted { background: var(--bg); color: var(--ink-soft); border: 1px solid var(--line); }
+
+.sb-add { padding: 8px 12px; flex-shrink: 0; }
+.sb-add-btn { display: block; text-align: center; padding: 8px 12px;
+  border: 1px dashed var(--line); border-radius: 8px; font-size: 12px;
+  color: var(--ink-soft); text-decoration: none; transition: all .13s; }
+.sb-add-btn:hover { border-color: var(--ink-soft); color: var(--ink); background: var(--bg); }
+
+.sb-foot { padding: 12px 18px; border-top: 1px solid var(--line); flex-shrink: 0; }
+.legal { font-size: 10px; color: var(--ink-soft); text-align: center; line-height: 1.5; }
+
+#map-wrap { position: relative; height: 100%; }
+#map { width: 100%; height: 100%; }
+
+.leaflet-control-zoom { border: 1px solid var(--line) !important; box-shadow: 0 1px 6px rgba(0,0,0,.12) !important; border-radius: 6px !important; overflow: hidden; }
+.leaflet-control-zoom a { background: var(--paper) !important; color: var(--ink) !important; border-bottom: 1px solid var(--line) !important; font-size: 16px !important; line-height: 26px !important; width: 28px !important; height: 28px !important; }
+.leaflet-control-zoom a:hover { background: var(--bg) !important; }
+.leaflet-control-zoom-out { border-bottom: none !important; }
+.recenter-btn { display: block; width: 28px; height: 28px; background: var(--paper);
+  border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 1px 6px rgba(0,0,0,.12);
+  cursor: pointer; font-size: 15px; text-align: center; line-height: 26px;
+  color: var(--ink-soft); transition: background .13s; margin-top: 6px; }
+.recenter-btn:hover { background: var(--bg); }
+/* Airbnb-style rating labels */
+.rl { background: white; border-radius: 20px; padding: 5px 10px;
+  font-family: 'Geist', sans-serif; font-size: 13px; font-weight: 700; line-height: 1;
+  box-shadow: 0 2px 8px rgba(0,0,0,.22), 0 0 0 1.5px rgba(0,0,0,.07);
+  cursor: pointer; white-space: nowrap; display: inline-block;
+  transition: transform .13s, box-shadow .13s; color: var(--ink); }
+.rl.rl-poor { color: var(--poor); }
+.rl.rl-ok   { color: var(--ok); }
+.rl.rl-good { color: var(--good); }
+.rl.rl-active { transform: scale(1.12);
+  box-shadow: 0 4px 16px rgba(0,0,0,.38), 0 0 0 2px var(--ink); }
+
+/* ── DETAIL PANEL ── */
+.detail-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 490;
+  opacity: 0; pointer-events: none; transition: opacity .2s; }
+.detail-overlay.open { opacity: 1; pointer-events: all; }
+
+.detail { position: fixed; top: 0; right: 0; bottom: 0;
+  width: min(660px, 96vw); pointer-events: none;
+  background: var(--paper); border-radius: 14px 0 0 14px; z-index: 500;
+  display: flex; flex-direction: column; overflow: hidden;
+  box-shadow: -6px 0 32px rgba(0,0,0,.18), 0 0 0 1px rgba(0,0,0,.06);
+  transform: translateX(calc(100% + 2px));
+  transition: transform .25s cubic-bezier(.25,.46,.45,.94); }
+.detail.open { transform: translateX(0); pointer-events: all; }
+@media (max-width: 760px) {
+  .detail { width: 100%; height: 92vh; border-radius: 16px 16px 0 0;
+    top: auto; right: 0; bottom: 0; transform: translateY(calc(100% + 2px)); }
+  .detail.open { transform: translateY(0); } }
+
+.photo-hero { position: relative; width: 100%; height: 320px; background: #ddd;
+  flex-shrink: 0; overflow: hidden; }
+.photo-hero img { width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity .2s; }
+.photo-hero img.loading { opacity: 0; }
+.close-btn { position: absolute; top: 12px; right: 12px; z-index: 10; width: 32px; height: 32px;
+  border-radius: 50%; background: rgba(255,255,255,.92); backdrop-filter: blur(6px);
+  border: none; cursor: pointer; font-size: 15px; color: var(--ink);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 1px 6px rgba(0,0,0,.2); transition: background .13s; }
+.close-btn:hover { background: white; }
+.photo-count { position: absolute; bottom: 10px; right: 12px; background: rgba(0,0,0,.55);
+  color: white; font-size: 11px; padding: 2px 8px; border-radius: 10px; backdrop-filter: blur(4px); }
+
+.thumb-strip { display: flex; gap: 5px; padding: 8px 14px; background: #f0ede8;
+  border-bottom: 1px solid var(--line); overflow-x: auto; flex-shrink: 0; scrollbar-width: none; }
+.thumb-strip::-webkit-scrollbar { display: none; }
+.thumb { width: 58px; height: 44px; object-fit: cover; border-radius: 5px; cursor: pointer;
+  opacity: .65; flex-shrink: 0; border: 2px solid transparent; transition: opacity .13s, border-color .13s; }
+.thumb:hover { opacity: .85; }
+.thumb.active { opacity: 1; border-color: var(--ink); }
+
+.panel-info { padding: 14px 18px 12px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
+.panel-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.rpill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px;
+  border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+.rpill.good { background: var(--good-bg); color: var(--good); }
+.rpill.ok   { background: var(--ok-bg);   color: var(--ok); }
+.rpill.poor { background: var(--poor-bg); color: var(--poor); }
+.rpill.safety { background: #fff0e0; color: #c05000; border: 1px solid #f0c090; }
+.panel-name-row { display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 10px; margin-bottom: 3px; }
+.panel-name { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 700;
+  line-height: 1.2; flex: 1; }
+.panel-score { font-family: 'Fraunces', serif; font-size: 30px; font-weight: 800;
+  line-height: 1; flex-shrink: 0; }
+.panel-score.good { color: var(--good); }
+.panel-score.ok   { color: var(--ok); }
+.panel-score.poor { color: var(--poor); }
+.panel-addr { font-size: 12px; color: var(--ink-soft); }
+
+.panel-content { flex: 1; overflow-y: auto; }
+.psec { padding: 14px 18px; border-bottom: 1px solid var(--line); }
+.psec:last-child { border-bottom: none; }
+.psec-label { font-size: 10px; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--ink-soft); margin-bottom: 10px; }
+
+.amenities { display: flex; flex-direction: column; }
+.am-item { display: flex; align-items: baseline; padding: 5px 0;
+  border-bottom: 1px solid #f0ece6; font-size: 12px; gap: 8px; }
+.am-item:last-child { border-bottom: none; }
+.am-cat { color: var(--ink-soft); white-space: nowrap; flex-shrink: 0; }
+.am-val { color: var(--ink); font-weight: 500; }
+.am-val.positive { color: var(--good); }
+.am-val.negative { color: var(--ink-soft); font-weight: 400; }
+.am-val.risky { color: var(--poor); }
+.am-val.warn { color: var(--ok); }
+
+.safety-list { list-style: none; }
+.safety-list li { font-size: 13px; padding: 5px 0; border-bottom: 1px solid #f0ece6;
+  display: flex; gap: 8px; line-height: 1.45; }
+.safety-list li:last-child { border-bottom: none; }
+
+.eq-table { width: 100%; }
+.eq-table tr td { padding: 4px 0; font-size: 12px; vertical-align: middle; }
+.eq-table td:first-child { color: var(--ink-soft); width: 50%; }
+.eq-table td:nth-child(2) { text-align: center; font-weight: 600; width: 15%; }
+.eq-table td:last-child { text-align: right; }
+.cdots { display: flex; gap: 3px; justify-content: flex-end; }
+.cdot { width: 7px; height: 7px; border-radius: 50%; background: var(--line); }
+.cdot.on.good { background: var(--good); } .cdot.on.ok { background: var(--ok); } .cdot.on.poor { background: var(--poor); }
+
+.surface-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+.scond { font-size: 10px; padding: 2px 8px; border-radius: 3px; font-weight: 500; }
+.scond.good { background: var(--good-bg); color: var(--good); }
+.scond.warn { background: var(--ok-bg);   color: var(--ok); }
+.scond.bad  { background: var(--poor-bg); color: var(--poor); }
+
+.rating-reason { font-size: 13px; line-height: 1.65; }
+.std-note { margin-top: 9px; padding: 7px 10px; background: var(--bg);
+  border-left: 2px solid var(--line); border-radius: 0 4px 4px 0;
+  font-size: 11px; color: var(--ink-soft); line-height: 1.5; }
+.notes-text { font-size: 12px; color: var(--ink-soft); line-height: 1.65; }
+
+
+/* ── HISTORY TIMELINE ── */
+.history-line { display: flex; gap: 10px; padding: 6px 0; font-size: 12px;
+  border-bottom: 1px solid #f0ece6; align-items: flex-start; }
+.history-line:last-child { border-bottom: none; }
+.history-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+.history-dot.good { background: var(--good); } .history-dot.ok { background: var(--ok); } .history-dot.poor { background: var(--poor); }
+.history-date { color: var(--ink-soft); flex-shrink: 0; min-width: 90px; }
+.history-note { color: var(--ink-soft); line-height: 1.5; }
+.history-arrow { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; margin-top: 2px; }
+
+.panel-foot { padding: 12px 18px; border-top: 1px solid var(--line); background: #faf8f4; flex-shrink: 0; }
+.foot-meta { font-size: 10px; color: var(--ink-soft); line-height: 1.5; margin-bottom: 9px; }
+.report-btn { width: 100%; padding: 10px; background: var(--ink); color: var(--paper);
+  border: none; border-radius: 7px; font-family: inherit; font-size: 13px;
+  font-weight: 500; cursor: pointer; transition: opacity .13s; }
+.report-btn:hover { opacity: .85; }
+
+/* ── REPORT MODAL ── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 2000;
+  opacity: 0; pointer-events: none; transition: opacity .2s; }
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%) translateY(100%);
+  width: min(480px, 100vw); background: var(--paper); border-radius: 14px 14px 0 0;
+  z-index: 2001; transition: transform .25s cubic-bezier(.25,.46,.45,.94);
+  display: flex; flex-direction: column; max-height: 90vh; overflow: hidden; }
+.modal.open { transform: translateX(-50%) translateY(0); }
+.modal-head { padding: 16px 18px 12px; border-bottom: 1px solid var(--line); position: relative; flex-shrink: 0; }
+.modal-title { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 700; }
+.modal-pg { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+.modal-close { position: absolute; right: 14px; top: 14px; background: none; border: none;
+  font-size: 18px; cursor: pointer; color: var(--ink-soft); padding: 4px; line-height: 1; }
+.modal-body { padding: 16px 18px; overflow-y: auto; flex: 1; }
+.modal-label { font-size: 11px; text-transform: uppercase; letter-spacing: .07em;
+  color: var(--ink-soft); margin-bottom: 8px; }
+.type-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.tchip { padding: 5px 13px; font-size: 12px; font-family: inherit; border: 1px solid var(--line);
+  border-radius: 20px; background: transparent; color: var(--ink-soft); cursor: pointer; transition: all .13s; }
+.tchip:hover { border-color: var(--ink-soft); color: var(--ink); }
+.tchip.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.modal-field { margin-top: 14px; }
+.modal-textarea { width: 100%; border: 1px solid var(--line); border-radius: 7px;
+  padding: 10px 12px; font-family: inherit; font-size: 13px; resize: vertical;
+  background: var(--bg); color: var(--ink); line-height: 1.5; }
+.modal-textarea:focus, .modal-input:focus { outline: none; border-color: var(--ink-soft); }
+.modal-input { width: 100%; border: 1px solid var(--line); border-radius: 7px;
+  padding: 9px 12px; font-family: inherit; font-size: 13px; background: var(--bg); color: var(--ink); }
+.modal-foot { padding: 12px 18px; border-top: 1px solid var(--line); display: flex; gap: 10px; flex-shrink: 0; }
+.modal-cancel { flex: 1; padding: 10px; border: 1px solid var(--line); border-radius: 7px;
+  background: transparent; font-family: inherit; font-size: 13px; cursor: pointer; color: var(--ink-soft); }
+.modal-submit { flex: 2; padding: 10px; background: var(--ink); color: var(--paper);
+  border: none; border-radius: 7px; font-family: inherit; font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: opacity .13s; }
+.modal-submit:hover { opacity: .85; }
+.modal-submit:disabled { opacity: .45; cursor: default; }
+.modal-success { text-align: center; padding: 32px 18px; }
+.modal-success .ms-icon { font-size: 38px; margin-bottom: 12px; }
+.modal-success .ms-title { font-family: 'Fraunces', serif; font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+.modal-success .ms-sub { font-size: 13px; color: var(--ink-soft); line-height: 1.65; }
+
+/* ── REPORT PHOTO ── */
+.rph-area { border: 1.5px dashed var(--line); border-radius: 8px; cursor: pointer;
+  overflow: hidden; transition: border-color .13s; }
+.rph-area:hover { border-color: var(--ink-soft); }
+.rph-ph { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 14px 12px; }
+.rph-preview { width: 100%; height: 150px; object-fit: cover; display: block; }
+
+/* ── STAR RATING ── */
+.stars-input { display: flex; gap: 0; margin-bottom: 6px; }
+.star-btn { background: none; border: none; font-size: 28px; cursor: pointer;
+  color: #d8d0c4; padding: 1px 3px; line-height: 1; transition: color .1s, transform .1s;
+  font-family: inherit; }
+.star-btn.lit { color: var(--ok); }
+.star-btn:hover { transform: scale(1.15); }
+.stars-done { font-size: 22px; color: var(--ok); letter-spacing: 2px; margin-bottom: 5px; }
+.rating-note { font-size: 11px; color: var(--ink-soft); line-height: 1.5; }
+.rating-submitted { font-size: 12px; color: var(--good); margin-top: 4px; font-weight: 500; }
+</style>
+</head>
+<body>
+<!-- Netlify Forms detectors -->
+<form name="report-promeni" netlify hidden><input name="data" /></form>
+<form name="ocenka" netlify hidden><input name="data" /></form>
+
+<header>
+  <h1>Игралишта <span class="accent">Карпош</span></h1>
+  <div class="header-right">
+    <span class="header-stat"><strong id="h-total">—</strong> игралишта · мај 2025</span>
+    <span class="method-badge">EN 1176 · CPSC</span>
+    <a class="stats-link" href="stats.html">📊 Статистики</a>
+    <a class="add-btn" href="submit.html">+ Додај игралиште</a>
+  </div>
+</header>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="sb-top">
+      <p class="sb-tagline">Граѓанска иницијатива за безбедни детски игралишта. Податоците ги собираат родители, не општини.</p>
+    </div>
+
+    <div class="filters">
+      <div class="filter-row">
+        <div class="neigh-wrap" id="neigh-wrap">
+          <select class="neigh-sel" id="neigh-select">
+            <option value="">Населба</option>
+            <option value="Тафталиџе">Тафталиџе</option>
+            <option value="Млечен">Млечен</option>
+            <option value="Карпош 3">Карпош 3</option>
+          </select>
+        </div>
+      </div>
+      <div class="filter-row">
+        <button class="fbtn" data-filter="good">🟢 Добра</button>
+        <button class="fbtn" data-filter="ok">🟡 Прифатл.</button>
+        <button class="fbtn" data-filter="poor">🔴 Слаба</button>
+      </div>
+      <div class="filter-row">
+        <button class="fbtn" data-filter="toddler">👶 0–3</button>
+        <button class="fbtn" data-filter="school">🧒 3–12</button>
+      </div>
+      <div class="filter-row">
+        <button class="fbtn" data-filter="shade">🌳 Сенка</button>
+        <button class="fbtn" data-filter="bikes">🛴 Тротинет</button>
+        <button class="fbtn" data-filter="clean">🧹 Чисто</button>
+      </div>
+      <div class="filter-row">
+        <button class="fbtn" data-filter="rubber">Гумирана подлога</button>
+        <button class="fbtn" data-filter="natural">Чакал / Трева</button>
+      </div>
+    </div>
+
+    <div class="list-scroll">
+      <div class="list-label">Листа на игралишта</div>
+      <div id="pg-list"></div>
+    </div>
+
+    <div class="sb-add">
+      <a class="sb-add-btn" href="submit.html">+ Додај игралиште</a>
+    </div>
+
+    <div class="sb-foot">
+      <div class="legal">Граѓанско набљудување, не сертифицирана инспекција.<br>За формален наод: Општина Карпош.</div>
+    </div>
+  </aside>
+
+  <div id="map-wrap">
+    <div id="map"></div>
+  </div>
+</div>
+
+<div class="detail-overlay" id="detail-overlay" onclick="closePanel()"></div>
+<div class="detail" id="detail">
+  <div class="photo-hero">
+    <img id="d-hero" src="" alt="Фотографија" />
+    <button class="close-btn" onclick="closePanel()">✕</button>
+    <div class="photo-count" id="d-photo-count"></div>
+  </div>
+  <div class="thumb-strip" id="d-thumbs"></div>
+  <div class="panel-info">
+    <div class="panel-pills" id="d-pills"></div>
+    <div class="panel-name-row">
+      <div class="panel-name" id="d-name"></div>
+      <div class="panel-score" id="d-score"></div>
+    </div>
+    <div class="panel-addr" id="d-addr"></div>
+  </div>
+  <div class="panel-content" id="d-body"></div>
+  <div class="panel-foot">
+    <div class="foot-meta" id="d-foot-meta"></div>
+    <button class="report-btn" id="d-report-btn">+ Пријави промена или проблем</button>
+  </div>
+</div>
+
+<!-- Report modal -->
+<div class="modal-overlay" id="report-overlay" onclick="closeReport()"></div>
+<div class="modal" id="report-modal">
+  <div class="modal-head">
+    <div class="modal-title">Пријави промена или проблем</div>
+    <div class="modal-pg" id="report-pg-name"></div>
+    <button class="modal-close" onclick="closeReport()">✕</button>
+  </div>
+  <div class="modal-body" id="report-body">
+    <div class="modal-label">Тип на пријава</div>
+    <div class="type-chips" id="report-types">
+      <button class="tchip active" data-type="problem">🔴 Нов проблем</button>
+      <button class="tchip" data-type="fixed">✅ Поправено</button>
+      <button class="tchip" data-type="dirty">🗑️ Нечистотија</button>
+      <button class="tchip" data-type="improved">⬆️ Подобрено</button>
+      <button class="tchip" data-type="photo">📷 Нова фотографија</button>
+      <button class="tchip" data-type="other">💬 Друго</button>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Опис <span style="color:var(--ink-soft);text-transform:none;letter-spacing:0">(задолжително)</span></div>
+      <textarea class="modal-textarea" id="report-desc" placeholder="Опишете ја промената или проблемот..." rows="4"></textarea>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Е-маил <span style="color:var(--ink-soft);text-transform:none;letter-spacing:0">(опционално, за повратна информација)</span></div>
+      <input class="modal-input" id="report-email" type="email" placeholder="roditel@example.com" />
+    </div>
+  </div>
+  <div class="modal-foot" id="report-foot">
+    <button class="modal-cancel" onclick="closeReport()">Откажи</button>
+    <button class="modal-submit" id="report-submit" onclick="submitReport()">Испрати пријава</button>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script>
+// ── CONFIG ─────────────────────────────────────────────────────────────────
+const COND_COLOR = { good: '#2a7a50', ok: '#b8860b', poor: '#b83030' };
+const COND_LABEL = { good: '🟢 Добра состојба', ok: '🟡 Прифатливо', poor: '🔴 Слаба состојба' };
+const ROAD_CONFIG = {
+  safe:     { icon: '🟢', label: 'Безбедно', cls: 'positive' },
+  moderate: { icon: '🟡', label: 'Улица во близина', cls: 'warn' },
+  risky:    { icon: '🔴', label: 'Директно до улица', cls: 'risky' },
+};
+const SHADE_LABEL = { none: 'Нема', partial: 'Делумна', good: 'Добра' };
+const CROWD_LABEL = { quiet: 'Тивко', moderate: 'Умерено', busy: 'Гужва' };
+const SIZE_LABEL  = { small: 'Мало', medium: 'Средно', large: 'Големо' };
+const AGE_LABEL   = { toddler: '👶 0–3 год', school: '🧒 3–12 год' };
+const CLEAN_LABEL = { clean: '🧹 Чисто', ok: '🧹 Прифатливо', dirty: '🗑️ Нечисто' };
+const CLEAN_CLS   = { clean: 'good', ok: 'muted', dirty: 'poor' };
+const CLEAN_AM    = { clean: 'positive', ok: '', dirty: 'risky' };
+
+function fmtDate(d) {
+  if (!d) return 'мај 2025';
+  const [y, m, day] = d.split('-');
+  const mo = ['','јан','фев','мар','апр','мај','јун','јул','авг','сеп','окт','ное','дек'];
+  return `${parseInt(day)} ${mo[parseInt(m)]} ${y}`;
+}
+
+// ── MAP ─────────────────────────────────────────────────────────────────────
+const KARPOS_CENTER = [42.001, 21.398];
+const map = L.map('map', {
+  center: KARPOS_CENTER, zoom: 15, minZoom: 14, maxZoom: 18,
+  maxBounds: [[41.972, 21.368], [42.032, 21.452]], maxBoundsViscosity: 1.0,
+  dragging: false, scrollWheelZoom: false, touchZoom: false,
+  doubleClickZoom: false, boxZoom: false, keyboard: false,
+});
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© <a href="https://www.openstreetmap.org/copyright">OSM</a> · © <a href="https://carto.com/attributions">CARTO</a>',
+  subdomains: 'abcd', maxZoom: 19,
+}).addTo(map);
+
+const RecenterControl = L.Control.extend({
+  options: { position: 'topleft' },
+  onAdd() {
+    const btn = L.DomUtil.create('button', 'recenter-btn');
+    btn.innerHTML = '⊕'; btn.title = 'Центрирај на Карпош';
+    L.DomEvent.on(btn, 'click', L.DomEvent.stop);
+    L.DomEvent.on(btn, 'click', () => map.setView(KARPOS_CENTER, 14));
+    return btn;
+  },
+});
+new RecenterControl().addTo(map);
+
+function makeLabel(p, active) {
+  const score = computeRating(p);
+  const cls = score >= 4.0 ? 'good' : score >= 2.5 ? 'ok' : 'poor';
+  return L.divIcon({
+    className: '',
+    html: `<div class="rl rl-${cls}${active ? ' rl-active' : ''}">${score.toFixed(1)}</div>`,
+    iconSize: null,
+    iconAnchor: [20, 14],
+  });
+}
+
+const markerMap = {};
+let activePgId = null;
+
+playgrounds.forEach(p => {
+  const m = L.marker([p.lat, p.lon], { icon: makeLabel(p, false) }).addTo(map);
+  m.on('click', () => openPanel(p));
+  markerMap[p.id] = m;
+});
+
+// ── FILTERS ─────────────────────────────────────────────────────────────────
+let activeFilter = 'all';
+let activeNeighborhood = '';
+
+function applyFilters() {
+  buildList(); updateStats();
+  playgrounds.forEach(p => {
+    matchFilter(p, activeFilter)
+      ? markerMap[p.id].addTo(map)
+      : map.removeLayer(markerMap[p.id]);
+  });
+}
+
+function matchFilter(p, f) {
+  if (activeNeighborhood && p.neighborhood !== activeNeighborhood) return false;
+  if (f === 'all')     return true;
+  if (f === 'good')    return p.condition === 'good';
+  if (f === 'ok')      return p.condition === 'ok';
+  if (f === 'poor')    return p.condition === 'poor';
+  if (f === 'toddler') return p.age_range.includes('toddler');
+  if (f === 'school')  return p.age_range.includes('school');
+  if (f === 'shade')   return p.shade !== 'none';
+  if (f === 'bikes')   return p.bikes_ok === true;
+  if (f === 'fenced')  return p.fenced === true;
+  if (f === 'clean')   return p.cleanliness !== 'dirty';
+  if (f === 'rubber')  return p.surface.type.includes('гумирана');
+  if (f === 'natural') return !p.surface.type.includes('гумирана');
+  return true;
+}
+
+document.querySelectorAll('.fbtn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const wasActive = btn.classList.contains('active');
+    document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('active'));
+    if (wasActive) {
+      activeFilter = 'all';
+    } else {
+      btn.classList.add('active');
+      activeFilter = btn.dataset.filter;
+    }
+    applyFilters();
+  });
+});
+
+document.getElementById('neigh-select').addEventListener('change', function() {
+  activeNeighborhood = this.value;
+  const active = this.value !== '';
+  this.classList.toggle('active', active);
+  document.getElementById('neigh-wrap').classList.toggle('active', active);
+  applyFilters();
+});
+
+// ── LIST ────────────────────────────────────────────────────────────────────
+const listEl = document.getElementById('pg-list');
+
+function buildList() {
+  const filtered = playgrounds
+    .filter(p => matchFilter(p, activeFilter))
+    .sort((a, b) => computeRating(b) - computeRating(a));
+  listEl.innerHTML = '';
+  filtered.forEach(p => {
+    const score = computeRating(p);
+    const cls = score >= 4.0 ? 'good' : score >= 2.5 ? 'ok' : 'poor';
+    const card = document.createElement('div');
+    card.className = 'pg-card' + (p.id === activePgId ? ' active' : '');
+    card.id = 'card-' + p.id;
+    const ageTag   = p.age_range.includes('toddler') ? `<span class="ptag muted">👶 0–3</span>` : '';
+    const shadeTag = p.shade !== 'none'    ? `<span class="ptag muted">🌳 Сенка</span>` : '';
+    const bikesTag = p.bikes_ok            ? `<span class="ptag muted">🛴 Тротинет</span>` : '';
+    const cleanTag = p.cleanliness === 'dirty' ? `<span class="ptag poor">🗑️ Нечисто</span>` : '';
+    const safetyRow = p.safety_issues.length
+      ? `<div class="pg-tags" style="margin-top:3px"><span class="ptag warn">⚠️ Безб. проблем</span></div>` : '';
+    card.innerHTML = `
+      <div class="pg-card-top">
+        <div>
+          <div class="pg-name">${p.name}</div>
+          <div class="pg-neigh">${p.neighborhood}</div>
+        </div>
+        <span class="pg-rating ${cls}">${score.toFixed(1)}</span>
+      </div>
+      <div class="pg-tags">${ageTag}${shadeTag}${bikesTag}${cleanTag}</div>
+      ${safetyRow}`;
+    card.addEventListener('click', () => { map.setView([p.lat, p.lon], 16); openPanel(p); });
+    listEl.appendChild(card);
+  });
+}
+
+function updateStats() {}
+
+// ── DETAIL PANEL ────────────────────────────────────────────────────────────
+function historyHtml(p) {
+  if (!p.history || p.history.length === 0) return '';
+  const rows = [...p.history]
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map(h => `
+      <div class="history-line">
+        <div class="history-dot ${h.condition}"></div>
+        <div>
+          <div class="history-date">${fmtDate(h.date)}</div>
+          <div class="history-arrow">
+            <span class="rpill ${h.condition}" style="font-size:10px;padding:1px 7px">${COND_LABEL[h.condition]}</span>
+            <span style="color:var(--ink-soft)">→</span>
+            <span class="rpill ${p.condition}" style="font-size:10px;padding:1px 7px">${COND_LABEL[p.condition]}</span>
+          </div>
+          ${h.note ? `<div class="history-note" style="margin-top:3px">${h.note}</div>` : ''}
+        </div>
+      </div>`).join('');
+  return `<div class="psec">
+    <div class="psec-label">Историја на промени</div>
+    ${rows}
+    <div class="history-line" style="opacity:.5">
+      <div class="history-dot ${p.condition}"></div>
+      <div><div class="history-date">${fmtDate(p.assessed)}</div>
+        <div class="history-note">Тековна оценка</div></div>
+    </div>
+  </div>`;
+}
+
+function condDots(c) {
+  const cls = c <= 2 ? 'poor' : c === 3 ? 'ok' : 'good';
+  return `<div class="cdots">${Array.from({length:5},(_,i) =>
+    `<div class="cdot${i < c ? ' on ' + cls : ''}"></div>`).join('')}</div>`;
+}
+
+function setHero(p, idx) {
+  const photos = p.photos || [];
+  const hero = document.getElementById('d-hero');
+  const url = photos[idx] || '';
+  hero.classList.add('loading');
+  const img = new Image();
+  img.onload = () => { hero.src = url; hero.classList.remove('loading'); };
+  img.onerror = () => { hero.classList.remove('loading'); };
+  img.src = url;
+  document.querySelectorAll('.thumb').forEach((t, i) => t.classList.toggle('active', i === idx));
+  document.getElementById('d-photo-count').textContent = `${idx+1} / ${photos.length}`;
+}
+
+function openPanel(p) {
+  window._pg = p;
+  if (activePgId) {
+    document.getElementById('card-'+activePgId)?.classList.remove('active');
+    const prev = playgrounds.find(x => x.id === activePgId);
+    if (prev) markerMap[activePgId]?.setIcon(makeLabel(prev, false));
+  }
+  activePgId = p.id;
+  document.getElementById('card-'+p.id)?.classList.add('active');
+  markerMap[p.id]?.setIcon(makeLabel(p, true));
+
+  // Photos
+  const photos = p.photos || [];
+  document.getElementById('d-hero').src = photos[0] || '';
+  document.getElementById('d-photo-count').textContent = photos.length ? `1 / ${photos.length}` : '';
+  document.getElementById('d-thumbs').innerHTML = photos.map((src, i) =>
+    `<img class="thumb${i===0?' active':''}" src="${src}" loading="lazy"
+      alt="Фото ${i+1}" onclick="setHero(window._pg,${i})" />`).join('');
+
+  // Header pills
+  const safetyPill = p.safety_issues.length
+    ? `<span class="rpill safety">⚠️ Безбедносен проблем</span>` : '';
+  document.getElementById('d-pills').innerHTML =
+    `<span class="rpill ${p.condition}">${COND_LABEL[p.condition]}</span>${safetyPill}`;
+  const score = computeRating(p);
+  const scoreCls = score >= 4.0 ? 'good' : score >= 2.5 ? 'ok' : 'poor';
+  document.getElementById('d-name').textContent = p.name;
+  const scoreEl = document.getElementById('d-score');
+  scoreEl.textContent = score.toFixed(1);
+  scoreEl.className = `panel-score ${scoreCls}`;
+  document.getElementById('d-addr').textContent = p.address;
+
+  // Amenities helpers
+  const road = ROAD_CONFIG[p.road_proximity];
+  const ageStr = p.age_range.map(a => a === 'toddler' ? '0–3 год' : '3–12 год').join(' · ');
+  const cleanVal = { clean: 'Чисто', ok: 'Прифатливо', dirty: 'Нечисто' }[p.cleanliness];
+  const am = (icon, label, val, cls) =>
+    `<div class="am-item"><span class="am-cat">${icon} ${label}:</span><span class="am-val ${cls}">${val}</span></div>`;
+
+  const amenHtml = `<div class="amenities">
+    ${am('🚗', 'Сообраќај', road.label, road.cls)}
+    ${am('📐', 'Големина', SIZE_LABEL[p.size], '')}
+    ${am('🧒', 'Возраст', ageStr, '')}
+    ${am('🌳', 'Сенка', SHADE_LABEL[p.shade], p.shade === 'none' ? 'negative' : 'positive')}
+    ${am('🚧', 'Ограден', p.fenced ? 'Да' : 'Не', p.fenced ? 'positive' : 'negative')}
+    ${am('🧹', 'Чистота', cleanVal, CLEAN_AM[p.cleanliness])}
+    ${am('🪑', 'Клупи', p.benches > 0 ? p.benches : 'Нема', p.benches > 0 ? '' : 'negative')}
+    ${am('💧', 'Вода', p.water_nearby ? 'Да' : 'Нема', p.water_nearby ? 'positive' : 'negative')}
+    ${am('🚽', 'Тоалет', p.toilet_nearby ? 'Да' : 'Нема', p.toilet_nearby ? 'positive' : 'negative')}
+    ${am('🏪', 'Продавница', p.store_nearby ? 'Да, близу' : 'Нема', p.store_nearby ? 'positive' : 'negative')}
+    ${am('💡', 'Осветлување', p.lighting ? 'Да' : 'Нема', p.lighting ? 'positive' : 'negative')}
+    ${am('👥', 'Гужва', CROWD_LABEL[p.crowdedness], '')}
+    ${am('🛴', 'Тротинети', p.bikes_ok ? 'Да' : 'Не', p.bikes_ok ? 'positive' : 'negative')}
+  </div>`;
+
+  // Safety section
+  const safetyHtml = p.safety_issues.length ? `
+    <div class="psec">
+      <div class="psec-label" style="color:var(--poor)">⚠️ Безбедносни проблеми (EN 1176 / CPSC)</div>
+      <ul class="safety-list">${p.safety_issues.map(s =>
+        `<li><span>🔴</span><span>${s}</span></li>`).join('')}</ul>
+    </div>` : '';
+
+  // Equipment
+  const eqRows = p.equipment.map(e => {
+    const countStr = (e.nf !== undefined && e.nf < e.n)
+      ? `<span style="color:var(--poor);font-size:11px">${e.nf}/${e.n} функц.</span>`
+      : `×${e.n}`;
+    return `<tr><td>${e.t}</td><td>${countStr}</td><td>${condDots(e.c)}</td></tr>`;
+  }).join('');
+
+
+  document.getElementById('d-body').innerHTML = `
+    <div class="psec">
+      <div class="psec-label">Општа оценка на состојбата</div>
+      <div class="rating-reason">${p.rating_reason}</div>
+      <div class="std-note">Визуелно набљудување · <strong>EN 1176</strong> (EU стандард) · <strong>CPSC Handbook</strong> · Не е сертифицирана инспекција.</div>
+    </div>
+    ${safetyHtml}
+    <div class="psec">
+      <div class="psec-label">Услови и пристап</div>
+      ${amenHtml}
+    </div>
+    <div class="psec">
+      <div class="psec-label">Опрема и состојба</div>
+      <table class="eq-table">${eqRows}</table>
+    </div>
+    <div class="psec">
+      <div class="psec-label">Подлога</div>
+      <div class="surface-row">
+        <span>${p.surface.type}</span>
+        <span class="scond ${p.surface.cond}">${p.surface.lbl}</span>
+      </div>
+    </div>
+    ${p.notes ? `<div class="psec"><div class="psec-label">Белешки</div><div class="notes-text">${p.notes}</div></div>` : ''}
+    ${historyHtml(p)}
+    <div class="psec">
+      <div class="psec-label">Оценка од корисници</div>
+      <div id="d-rating-widget"></div>
+    </div>`;
+
+  renderRatingWidget(p);
+
+  document.getElementById('d-foot-meta').innerHTML =
+    `Оценето: <strong>${fmtDate(p.assessed)}</strong> · ID: <code style="font-size:10px">${p.id}</code> · CC BY-SA 4.0`;
+
+  document.getElementById('d-report-btn').onclick = () => openReport(p.id);
+  document.getElementById('detail').classList.add('open');
+  document.getElementById('detail-overlay').classList.add('open');
+}
+
+function closePanel() {
+  document.getElementById('detail').classList.remove('open');
+  document.getElementById('detail-overlay').classList.remove('open');
+  if (activePgId) {
+    document.getElementById('card-'+activePgId)?.classList.remove('active');
+    const pg = playgrounds.find(x => x.id === activePgId);
+    if (pg) markerMap[activePgId]?.setIcon(makeLabel(pg, false));
+    activePgId = null;
+  }
+}
+
+// ── STAR RATING ──────────────────────────────────────────────────────────────
+function renderRatingWidget(p) {
+  const widget = document.getElementById('d-rating-widget');
+  if (!widget) return;
+  const key = 'vote_' + p.id;
+  const saved = parseInt(localStorage.getItem(key) || '0');
+
+  if (saved) {
+    widget.innerHTML = `
+      <div class="stars-done">${'★'.repeat(saved)}${'☆'.repeat(5 - saved)}</div>
+      <div class="rating-note">Ја дадовте вашата оценка. Оценките се собираат рачно и се ажурираат периодично.</div>`;
+    return;
+  }
+
+  widget.innerHTML = `
+    <div class="stars-input" id="stars-inp">
+      ${[1,2,3,4,5].map(n => `<button class="star-btn" data-v="${n}">☆</button>`).join('')}
+    </div>
+    <div class="rating-note">Оценете го ова игралиште (1 = многу лошо, 5 = одлично)</div>`;
+
+  const btns = widget.querySelectorAll('.star-btn');
+  btns.forEach((btn, i) => {
+    btn.addEventListener('mouseenter', () =>
+      btns.forEach((b, j) => b.classList.toggle('lit', j <= i)));
+    btn.addEventListener('mouseleave', () =>
+      btns.forEach(b => b.classList.remove('lit')));
+    btn.addEventListener('click', () => {
+      const val = parseInt(btn.dataset.v);
+      localStorage.setItem(key, val);
+      submitRating(p, val);
+      renderRatingWidget(p);
+    });
+  });
+}
+
+async function submitRating(p, val) {
+  const payload = { playground_id: p.id, name: p.name, rating: val, at: new Date().toISOString() };
+  console.log('[Игралишта] Оценка:', payload);
+  try {
+    await fetch('/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ 'form-name': 'ocenka', data: JSON.stringify(payload) }),
+    });
+  } catch(err) { console.warn('Netlify Forms error:', err); }
+}
+
+// ── REPORT MODAL ─────────────────────────────────────────────────────────────
+let reportPgId = null;
+let reportType = 'problem';
+let reportElement = '';
+let reportPhotoFile = null;
+
+function handleReportPhoto(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  reportPhotoFile = file;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const preview = document.getElementById('rph-preview');
+    preview.src = ev.target.result;
+    preview.style.display = 'block';
+    document.getElementById('rph-ph').style.display = 'none';
+    document.getElementById('rph-rm').style.display = 'block';
+    document.getElementById('rph-area').onclick = null;
+    document.getElementById('rph-area').style.cursor = 'default';
+    const note = document.getElementById('report-desc-note');
+    if (note) note.textContent = '(опционално)';
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeReportPhoto() {
+  reportPhotoFile = null;
+  document.getElementById('rph-preview').style.display = 'none';
+  document.getElementById('rph-ph').style.display = 'flex';
+  document.getElementById('rph-rm').style.display = 'none';
+  document.getElementById('rph-input').value = '';
+  document.getElementById('rph-area').style.cursor = 'pointer';
+  document.getElementById('rph-area').onclick = () => document.getElementById('rph-input').click();
+  const note = document.getElementById('report-desc-note');
+  if (note) note.textContent = '(задолжително ако нема фотографија)';
+}
+
+function openReport(pgId) {
+  reportPgId = pgId;
+  reportType = 'problem';
+  reportElement = '';
+  reportPhotoFile = null;
+
+  const p = playgrounds.find(x => x.id === pgId);
+  document.getElementById('report-pg-name').textContent = p ? p.name : '';
+
+  const eqChips = p?.equipment?.length
+    ? `<div class="modal-field">
+        <div class="modal-label">Кој елемент? <span style="color:var(--ink-soft);text-transform:none;letter-spacing:0">(опционално)</span></div>
+        <div class="type-chips" id="report-elements">
+          ${p.equipment.map(e => `<button class="tchip" data-el="${e.t}">${e.t}</button>`).join('')}
+          <button class="tchip" data-el="">Генерално</button>
+        </div>
+      </div>` : '';
+
+  document.getElementById('report-body').innerHTML = `
+    <div class="modal-label">Вид на пријава</div>
+    <div class="type-chips" id="report-types">
+      <button class="tchip active" data-type="problem">🔴 Проблем</button>
+      <button class="tchip" data-type="fixed">✅ Поправено</button>
+      <button class="tchip" data-type="dirty">🗑️ Нечисто</button>
+      <button class="tchip" data-type="improved">⬆️ Подобрено</button>
+      <button class="tchip" data-type="other">💬 Друго</button>
+    </div>
+    ${eqChips}
+    <div class="modal-field">
+      <div class="modal-label">Фотографија <span style="color:var(--ink-soft);text-transform:none;letter-spacing:0">— силно препорачана</span></div>
+      <div class="rph-area" id="rph-area" onclick="document.getElementById('rph-input').click()">
+        <input type="file" id="rph-input" accept="image/*" style="display:none" onchange="handleReportPhoto(event)" />
+        <div class="rph-ph" id="rph-ph">
+          <span style="font-size:22px">📷</span>
+          <span style="font-size:12px;color:var(--ink-soft)">Допри за да додадеш слика</span>
+        </div>
+        <img id="rph-preview" style="display:none" class="rph-preview" />
+      </div>
+      <div id="rph-rm" style="display:none;margin-top:5px">
+        <button type="button" onclick="removeReportPhoto()"
+          style="font-size:11px;color:var(--ink-soft);background:none;border:none;cursor:pointer;padding:0">
+          ✕ Отстрани фотографија</button>
+      </div>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Опис <span id="report-desc-note" style="color:var(--ink-soft);text-transform:none;letter-spacing:0">(задолжително ако нема фотографија)</span></div>
+      <textarea class="modal-textarea" id="report-desc" placeholder="Краток опис на промената или проблемот..." rows="3"></textarea>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Е-маил <span style="color:var(--ink-soft);text-transform:none;letter-spacing:0">(опционално)</span></div>
+      <input class="modal-input" id="report-email" type="email" placeholder="roditel@example.com" />
+    </div>`;
+
+  document.getElementById('report-foot').style.display = '';
+
+  document.querySelectorAll('#report-types .tchip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      reportType = chip.dataset.type;
+      document.querySelectorAll('#report-types .tchip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+    });
+  });
+
+  document.querySelectorAll('#report-elements .tchip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const wasActive = chip.classList.contains('active');
+      document.querySelectorAll('#report-elements .tchip').forEach(c => c.classList.remove('active'));
+      reportElement = wasActive ? '' : chip.dataset.el;
+      if (!wasActive) chip.classList.add('active');
+    });
+  });
+
+  const submitBtn = document.getElementById('report-submit');
+  submitBtn.disabled = false;
+  submitBtn.textContent = 'Испрати пријава';
+
+  document.getElementById('report-overlay').classList.add('open');
+  document.getElementById('report-modal').classList.add('open');
+}
+
+function closeReport() {
+  document.getElementById('report-overlay').classList.remove('open');
+  document.getElementById('report-modal').classList.remove('open');
+}
+
+async function submitReport() {
+  const desc = document.getElementById('report-desc')?.value.trim();
+  if (!desc && !reportPhotoFile) {
+    document.getElementById('report-desc')?.focus();
+    return;
+  }
+
+  const btn = document.getElementById('report-submit');
+  btn.disabled = true;
+  btn.textContent = 'Испраќање...';
+
+  const p = playgrounds.find(x => x.id === reportPgId);
+  const payload = {
+    playground_id: reportPgId,
+    playground_name: p?.name || '',
+    neighborhood: p?.neighborhood || '',
+    type: reportType,
+    element: reportElement || null,
+    description: desc || null,
+    has_photo: !!reportPhotoFile,
+    email: document.getElementById('report-email')?.value.trim() || null,
+    submitted_at: new Date().toISOString(),
+  };
+
+  try {
+    console.log('[Игралишта] Report payload:', payload);
+    await fetch('/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ 'form-name': 'report-promeni', data: JSON.stringify(payload) }),
+    });
+    showReportSuccess();
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = 'Испрати пријава';
+    alert('Грешка при испраќање. Обидете се повторно.');
+  }
+}
+
+function showReportSuccess() {
+  document.getElementById('report-body').innerHTML = `
+    <div class="modal-success">
+      <div class="ms-icon">✅</div>
+      <div class="ms-title">Пријавата е примена</div>
+      <div class="ms-sub">Ќе ја прегледаме во рок од 48 часа<br>и ќе ја ажурираме состојбата ако е потребно.<br><br>Благодарение за придонесот!</div>
+    </div>`;
+  document.getElementById('report-foot').innerHTML =
+    `<button class="modal-submit" onclick="closeReport()" style="flex:1">Затвори</button>`;
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+document.getElementById('h-total').textContent = playgrounds.length;
+buildList();
+</script>
+</body>
+</html>
