@@ -313,33 +313,49 @@ h1 .accent { color: var(--poor); font-style: italic; }
 /* ── ATTRIBUTION ── */
 .leaflet-control-attribution { display: none !important; }
 
+/* ── HERO NAV ARROWS ── */
+.hero-prev, .hero-next {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  background: rgba(255,255,255,.88); backdrop-filter: blur(4px);
+  border: none; width: 34px; height: 34px; border-radius: 50%;
+  cursor: pointer; font-size: 20px; color: var(--ink); line-height: 1;
+  display: none; align-items: center; justify-content: center;
+  box-shadow: 0 1px 6px rgba(0,0,0,.22); transition: background .13s; }
+.hero-prev { left: 10px; }
+.hero-next { right: 10px; }
+.hero-prev:hover, .hero-next:hover { background: white; }
+
+/* ── STATS LINK: icon-only on mobile ── */
+.sl-icon { display: none; }
+
 /* ── MOBILE ── */
 .panel-report-mobile { display: none; }
 
 @media (max-width: 760px) {
-  /* Header: compact */
-  header { padding: 8px 14px; }
+  /* Header: compact but breathable */
+  header { padding: 10px 14px; }
   h1 { font-size: 18px; }
-  .method-badge, .stats-link, .header-stat { display: none; }
+  .method-badge, .header-stat { display: none; }
   .add-btn { font-size: 11px; padding: 4px 10px; }
+  .stats-link { padding: 4px 8px; }
+  .sl-full { display: none; }
+  .sl-icon { display: inline; }
 
   /* Sidebar top: hide tagline to save space */
   .sb-top { padding: 8px 14px 6px; border-bottom: none; }
   .sb-tagline { display: none; }
 
-  /* Filters: single horizontal scroll row */
-  .filters { flex-direction: row; flex-wrap: nowrap; overflow-x: auto;
-    padding: 7px 12px; gap: 5px; scrollbar-width: none; }
-  .filters::-webkit-scrollbar { display: none; }
+  /* Filters: wrapped chips, 2-3 rows */
+  .filters { flex-direction: row; flex-wrap: wrap; padding: 8px 12px; gap: 5px; }
   .filter-row { display: contents; }
 
   /* List */
   .list-scroll { padding: 6px 10px; }
-  .sb-add { display: none; }
 
-  /* Detail panel: smaller hero, no thumb strip, report at end of scroll */
+  /* Detail panel: smaller hero, swipe arrows, no thumb strip, report at end of scroll */
   .photo-hero { height: 210px; }
   .thumb-strip { display: none; }
+  .hero-prev, .hero-next { display: flex; }
   .panel-foot { display: none; }
   .panel-report-mobile { display: block; }
 }
@@ -355,7 +371,7 @@ h1 .accent { color: var(--poor); font-style: italic; }
   <div class="header-right">
     <span class="header-stat"><strong id="h-total">—</strong> игралишта · мај 2025</span>
     <span class="method-badge">EN 1176 · CPSC</span>
-    <a class="stats-link" href="stats.html">📊 Статистики</a>
+    <a class="stats-link" href="stats.html"><span class="sl-full">📊 Статистики</span><span class="sl-icon">📊</span></a>
     <a class="add-btn" href="submit.html">+ Додај игралиште</a>
   </div>
 </header>
@@ -402,7 +418,7 @@ h1 .accent { color: var(--poor); font-style: italic; }
       <div id="pg-list"></div>
     </div>
 
-    <div class="sb-add">
+    <div class="sb-add" style="padding:8px 10px">
       <a class="sb-add-btn" href="submit.html">+ Додај игралиште</a>
     </div>
 
@@ -422,6 +438,8 @@ h1 .accent { color: var(--poor); font-style: italic; }
     <img id="d-hero" src="" alt="Фотографија" />
     <button class="close-btn" onclick="closePanel()">✕</button>
     <div class="photo-count" id="d-photo-count"></div>
+    <button class="hero-prev" id="hero-prev" onclick="navPhoto(-1)">‹</button>
+    <button class="hero-next" id="hero-next" onclick="navPhoto(1)">›</button>
   </div>
   <div class="thumb-strip" id="d-thumbs"></div>
   <div class="panel-info">
@@ -536,6 +554,14 @@ function makeLabel(p, active) {
 
 const markerMap = {};
 let activePgId = null;
+let currentPhotoIdx = 0;
+
+function navPhoto(dir) {
+  const photos = window._pg?.photos || [];
+  if (photos.length <= 1) return;
+  currentPhotoIdx = (currentPhotoIdx + dir + photos.length) % photos.length;
+  setHero(window._pg, currentPhotoIdx);
+}
 
 playgrounds.forEach(p => {
   const m = L.marker([p.lat, p.lon], { icon: makeLabel(p, false) }).addTo(map);
@@ -682,6 +708,7 @@ function setHero(p, idx) {
 
 function openPanel(p) {
   window._pg = p;
+  currentPhotoIdx = 0;
   if (activePgId) {
     document.getElementById('card-'+activePgId)?.classList.remove('active');
     const prev = playgrounds.find(x => x.id === activePgId);
@@ -698,6 +725,9 @@ function openPanel(p) {
   document.getElementById('d-thumbs').innerHTML = photos.map((src, i) =>
     `<img class="thumb${i===0?' active':''}" src="${src}" loading="lazy"
       alt="Фото ${i+1}" onclick="setHero(window._pg,${i})" />`).join('');
+  const multiPhoto = photos.length > 1;
+  document.getElementById('hero-prev').style.display = multiPhoto ? '' : 'none';
+  document.getElementById('hero-next').style.display = multiPhoto ? '' : 'none';
 
   // Header pills
   const safetyPill = p.safety_issues.length
