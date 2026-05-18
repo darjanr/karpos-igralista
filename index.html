@@ -46,7 +46,7 @@ h1 .accent { color: var(--poor); font-style: italic; }
 
 .app { display: grid; grid-template-columns: 320px 1fr; height: calc(100vh - 49px); }
 @media (max-width: 760px) {
-  .app { grid-template-columns: 1fr; grid-template-rows: 42vh 1fr; }
+  .app { grid-template-columns: 1fr; grid-template-rows: 32vh 1fr; }
   #map-wrap { order: -1; }
 }
 
@@ -309,6 +309,40 @@ h1 .accent { color: var(--poor); font-style: italic; }
 .stars-done { font-size: 22px; color: var(--ok); letter-spacing: 2px; margin-bottom: 5px; }
 .rating-note { font-size: 11px; color: var(--ink-soft); line-height: 1.5; }
 .rating-submitted { font-size: 12px; color: var(--good); margin-top: 4px; font-weight: 500; }
+
+/* ── ATTRIBUTION ── */
+.leaflet-control-attribution { display: none !important; }
+
+/* ── MOBILE ── */
+.panel-report-mobile { display: none; }
+
+@media (max-width: 760px) {
+  /* Header: compact */
+  header { padding: 8px 14px; }
+  h1 { font-size: 18px; }
+  .method-badge, .stats-link, .header-stat { display: none; }
+  .add-btn { font-size: 11px; padding: 4px 10px; }
+
+  /* Sidebar top: hide tagline to save space */
+  .sb-top { padding: 8px 14px 6px; border-bottom: none; }
+  .sb-tagline { display: none; }
+
+  /* Filters: single horizontal scroll row */
+  .filters { flex-direction: row; flex-wrap: nowrap; overflow-x: auto;
+    padding: 7px 12px; gap: 5px; scrollbar-width: none; }
+  .filters::-webkit-scrollbar { display: none; }
+  .filter-row { display: contents; }
+
+  /* List */
+  .list-scroll { padding: 6px 10px; }
+  .sb-add { display: none; }
+
+  /* Detail panel: smaller hero, no thumb strip, report at end of scroll */
+  .photo-hero { height: 210px; }
+  .thumb-strip { display: none; }
+  .panel-foot { display: none; }
+  .panel-report-mobile { display: block; }
+}
 </style>
 </head>
 <body>
@@ -466,7 +500,7 @@ function fmtDate(d) {
 // ── MAP ─────────────────────────────────────────────────────────────────────
 const KARPOS_CENTER = [42.001, 21.398];
 const map = L.map('map', {
-  center: KARPOS_CENTER, zoom: 15, minZoom: 14, maxZoom: 18,
+  center: KARPOS_CENTER, zoom: 14, minZoom: 13, maxZoom: 18,
   maxBounds: [[41.972, 21.368], [42.032, 21.452]], maxBoundsViscosity: 1.0,
   dragging: false, scrollWheelZoom: false, touchZoom: false,
   doubleClickZoom: false, boxZoom: false, keyboard: false,
@@ -745,6 +779,10 @@ function openPanel(p) {
     <div class="psec">
       <div class="psec-label">Оценка од корисници</div>
       <div id="d-rating-widget"></div>
+    </div>
+    <div class="psec panel-report-mobile">
+      <div class="foot-meta" style="margin-bottom:9px">Оценето: <strong>${fmtDate(p.assessed)}</strong> · CC BY-SA 4.0</div>
+      <button class="report-btn" onclick="openReport('${p.id}')">+ Пријави промена или проблем</button>
     </div>`;
 
   renderRatingWidget(p);
